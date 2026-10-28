@@ -163,7 +163,7 @@ CLAUDE.md
 - Corregir lo que rompan. Agregar al menos una regla de diagnóstico nacida de un fallo real.
 - Camino plugin modelado como checklist (ver sección 4).
 - Video de 90 s como respaldo de la demo.
-- Si sobra tiempo: sección "qué haría con esto en Fintoc" en el README. No más código.
+- Si sobra tiempo: sección "qué haría con esto en un producto de pagos real" en el README. No más código.
 - **Criterio de salida**: funnel con usuarios reales en `/metrics`, repo limpio, demo ensayada.
 
 ---
