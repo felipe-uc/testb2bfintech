@@ -1,0 +1,23 @@
+# secretos
+.env
+.env.*
+!.env.example
+
+# next / vercel
+.next/
+.vercel/
+out/
+next-env.d.ts
+*.tsbuildinfo
+
+# certificados
+*.pem
+
+# deps y sistema
+node_modules/
+.DS_Store
+*.log
+npm-debug.log*
+
+# claude code (ajustes locales con rutas de tu máquina)
+.claude/settings.local.json
