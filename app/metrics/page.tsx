@@ -70,23 +70,38 @@ async function Content() {
     <>
       <Card>
         <CardTitle hint="siete etapas, dos instrumentadas aquí">Etapas del onboarding de un comercio</CardTitle>
-        <ol className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
-          {STAGES.map((s, i) => (
-            <li
-              key={s.label}
-              className={`flex min-h-24 flex-col rounded-lg border p-2 text-xs leading-snug break-words ${
-                s.instrumented
-                  ? "border-accent bg-accent-soft"
-                  : "border-line text-muted"
-              }`}
-            >
-              <span className="font-mono">{i + 1}</span>
-              <span className="hyphens-auto font-medium">{s.label}</span>
-              <span className="mt-auto pt-1 text-[10px] uppercase tracking-wide">
-                {s.instrumented ? "instrumentada aquí" : "no instrumentada"}
-              </span>
-            </li>
-          ))}
+        <ol className="relative grid grid-cols-4 gap-y-6 sm:grid-cols-7 sm:gap-y-0">
+          {STAGES.map((st, i) => {
+            const prevInstrumented = i > 0 && STAGES[i - 1].instrumented;
+            return (
+              <li key={st.label} className="relative flex flex-col items-center text-center">
+                {/* línea hacia la etapa anterior; resaltada si el tramo está instrumentado */}
+                {i > 0 && (
+                  <span
+                    aria-hidden
+                    className={`absolute left-[-50%] right-[50%] top-4 h-0.5 ${
+                      st.instrumented && prevInstrumented ? "bg-accent" : "bg-line"
+                    } ${i === 4 ? "max-sm:hidden" : ""}`}
+                  />
+                )}
+                <span
+                  className={`relative z-[1] grid h-8 w-8 place-items-center rounded-full font-mono text-xs ${
+                    st.instrumented
+                      ? "bg-accent text-accent-ink ring-4 ring-accent-soft"
+                      : "border border-line bg-surface text-muted"
+                  }`}
+                >
+                  {i + 1}
+                </span>
+                <span className={`mt-2 px-1 text-xs leading-snug ${st.instrumented ? "font-medium" : "text-muted"}`}>
+                  {st.label}
+                </span>
+                {st.instrumented && (
+                  <span className="mt-1 text-[10px] font-medium uppercase tracking-wide text-accent">medida aquí</span>
+                )}
+              </li>
+            );
+          })}
         </ol>
         <p className="mt-3 text-xs text-muted">
           Este proyecto mide el tramo integración → primer pago de prueba. Las demás etapas viven dentro del proveedor.
