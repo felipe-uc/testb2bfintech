@@ -38,7 +38,7 @@ export async function GET(
     created_at: session.created_at,
     expires_at: session.expires_at,
     timeline: {
-      funnel: funnel.map((e) => ({ step: e.step, at: e.occurred_at })),
+      funnel: funnel.map((e) => ({ step: e.step, at: e.occurred_at, metadata: e.step === "widget_event" ? e.metadata : undefined })),
       webhooks: payments.map((p) => ({
         event_type: p.event_type,
         signature_valid: p.signature_valid,

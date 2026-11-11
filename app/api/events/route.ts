@@ -9,6 +9,7 @@ const STEPS = new Set([
   "widget_closed",
   "authorization_completed",
   "widget_error",
+  "widget_event",
 ]);
 
 /**

@@ -14,7 +14,7 @@ interface SessionView {
   created_at: string;
   expires_at: string;
   timeline: {
-    funnel: { step: string; at: string }[];
+    funnel: { step: string; at: string; metadata?: { type?: string } | null }[];
     webhooks: { event_type: string; signature_valid: boolean; at: string }[];
   };
   diagnostics: { rule_id: string; severity: string; explanation: string; next_step: string }[];
@@ -124,8 +124,10 @@ export default function SessionClient({ id }: { id: string }) {
         onSuccess: () => track("authorization_completed"),
         onExit: () => track("widget_closed"),
         onEvent: (event) => {
-          const type = (event as { type?: string } | undefined)?.type;
-          if (type && /error/i.test(type)) track("widget_error", { type });
+          // Se registra todo tipo de evento del widget para ver qué emite Fintoc
+          // cuando el banco rechaza antes de autorizar (sin webhook ni onExit).
+          const type = String((event as { type?: unknown } | undefined)?.type ?? "unknown");
+          track(/error/i.test(type) ? "widget_error" : "widget_event", { type });
         },
       });
       widgetRef.current.open();
@@ -149,7 +151,7 @@ export default function SessionClient({ id }: { id: string }) {
   const statusKey = expired && !terminal ? "expired" : session.status;
 
   const events = [
-    ...session.timeline.funnel.map((e) => ({ at: e.at, label: STEP_LABELS[e.step] ?? e.step, ok: e.step !== "widget_error" && e.step !== "widget_closed", kind: "funnel" })),
+    ...session.timeline.funnel.map((e) => ({ at: e.at, label: e.step === "widget_event" ? `Evento del widget: ${e.metadata?.type ?? "?"}` : (STEP_LABELS[e.step] ?? e.step), ok: e.step !== "widget_error" && e.step !== "widget_closed", kind: "funnel" })),
     ...session.timeline.webhooks.map((w) => ({
       at: w.at,
       label: `Webhook ${w.event_type} · ${w.signature_valid ? "firma válida" : "firma inválida"}`,
