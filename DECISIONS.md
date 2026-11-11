@@ -127,3 +127,11 @@ Reemplaza la entrada anterior del mismo día ("consultar la checkout session").
 **Por qué:** verificado con la sesión c30425d0: tras el rechazo en pantalla Fintoc deja la checkout session y el payment intent en `in_progress` con `error_reason` nulo, y la implementación anterior consultaba en cada poll (30 llamadas en 2 minutos) sin obtener nada. La señal del widget es inmediata y suficiente para decir "el banco rechazó"; la razón solo existe cuando la sesión termina.
 
 **Descartado:** consultar a Fintoc mientras la sesión está viva (no devuelve nada y multiplica llamadas); esperar la expiración para diagnosticar (15 minutos sin respuesta al usuario); inferir la razón desde el nombre del evento del widget (no la trae).
+
+## 2026-11-11 — `/metrics` sin selector "solo yo / todos"
+
+**Decisión:** el panel muestra todas las sesiones. `is_owner` se sigue guardando por sesión.
+
+**Por qué:** es un ambiente de prueba sin usuarios externos; separar las sesiones del autor del resto no aporta nada.
+
+**Descartado:** mantener el selector como estaba (2026-10-28).
