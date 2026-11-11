@@ -123,10 +123,10 @@ export default function SessionClient({ id }: { id: string }) {
         sessionToken,
         onSuccess: () => track("authorization_completed"),
         onExit: () => track("widget_closed"),
-        onEvent: (event) => {
-          // Se registra todo tipo de evento del widget para ver qué emite Fintoc
-          // cuando el banco rechaza antes de autorizar (sin webhook ni onExit).
-          const type = String((event as { type?: unknown } | undefined)?.type ?? "unknown");
+        onEvent: (eventName) => {
+          // Se registra cada evento del widget: es la única señal cuando el banco
+          // rechaza antes de autorizar (no hay webhook ni onExit).
+          const type = typeof eventName === "string" ? eventName : "unknown";
           track(/error/i.test(type) ? "widget_error" : "widget_event", { type });
         },
       });

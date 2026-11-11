@@ -15,7 +15,8 @@ export interface FintocWidgetOptions {
   sessionToken: string;
   onSuccess?: () => void;
   onExit?: () => void;
-  onEvent?: (event: unknown) => void;
+  /** Firma documentada: (eventName, metadata). Ver docs.fintoc.com/docs/widget-events. */
+  onEvent?: (eventName: string, metadata?: Record<string, unknown>) => void;
 }
 
 declare global {
