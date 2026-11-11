@@ -109,3 +109,11 @@ Decisiones de producto y arquitectura tomadas por el autor del proyecto, escrita
 **Por qué:** lo que quiero mostrar no es una integración con Fintoc, sino un sistema para medir y diagnosticar la activación de un producto de pagos. Con la frontera clara puedo decir qué parte es mérito del proveedor y cuál es mía, y cambiar de proveedor sería reescribir un archivo y un mapeo de eventos, no el producto.
 
 **Descartado:** una capa de abstracción para varios proveedores (generalizar antes de necesitarlo). Usar el SDK oficial (ya descartado en la entrada del cliente de Fintoc).
+
+## 2026-11-11 — Rechazo del banco sin webhook: consultar la checkout session
+
+**Decisión:** cuando una sesión no tiene webhook y el widget emitió `payment_error` o `back-to-checkout-buttons`, el servidor consulta una sola vez `GET /v2/checkout_sessions/{id}` y, si `payment_resource.payment_intent.status` es `failed` o `rejected`, guarda el `error_reason` como evento de funnel `payment_rejected_in_bank`. Se agrega la regla `bank_rejected` (severidad media) justo antes de `abandoned_in_widget`: "El banco rechazó el pago: <error_reason>"; para `new_contact_amount_limit_reached` el siguiente paso es sugerir un monto menor o repetir el pago. Referencia la entrada del 2026-10-28 sobre reglas; la lista pasa a once.
+
+**Por qué:** probado con la cuenta 5233138811 (sesiones 510a237d y abf076b2): el banco rechaza dentro del widget, el widget no emite `payment_error`, la checkout session no termina y Fintoc no envía `payment_intent.failed`. Para el sistema era indistinguible de un abandono y el diagnóstico salía mal. El `error_reason` solo existe en el objeto de Fintoc.
+
+**Descartado:** esperar al webhook `checkout_session.expired` (llega 15 min después y sin razón del fallo); inferir el rechazo solo desde `back-to-checkout-buttons` (evento no documentado, sin la razón); consultar a Fintoc en cada poll (una consulta por sesión, igual que el LLM).
