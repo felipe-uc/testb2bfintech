@@ -44,9 +44,18 @@ export async function fetchBankRejection<E extends FunnelEvent>(
   try {
     const remote = await fetchSession(fintocSessionId);
     const intent = remote.payment_resource?.payment_intent;
+    // Log mínimo (CLAUDE.md 12.3): estado de la sesión y del intento, sin payload ni IDs de Fintoc.
+    console.log("bank_rejection_lookup", {
+      session_id: sessionId,
+      session_status: remote.status,
+      has_payment_resource: Boolean(remote.payment_resource),
+      intent_status: intent?.status ?? null,
+      error_reason: intent?.error_reason ?? null,
+    });
     if (!intent || !REJECTED_STATUSES.has(String(intent.status))) return funnel;
     reason = intent.error_reason ?? "unknown";
-  } catch {
+  } catch (err) {
+    console.warn("bank_rejection_lookup_failed", { session_id: sessionId, reason: err instanceof Error ? err.message : "unknown" });
     return funnel;
   }
   const metadata = { error_reason: reason };
