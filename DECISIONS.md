@@ -65,7 +65,7 @@ Decisiones de producto y arquitectura tomadas por el autor del proyecto, escrita
 
 **Por qué este orden:** es como revisa un agente de Soporte. Primero descarta lo que anula todo (expiró, nunca lo intentó), después sigue el flujo paso a paso hasta el punto donde se cortó, y al final mira la calidad de lo que sí llegó. Las reglas 6 y 7 replican los tickets reales ("pagué y no llegó", "no verifica la firma"); por eso son críticas y son el centro de la demo. La regla 5 nació de la primera prueba real: el widget se abrió dos veces sin cierre entre medio.
 
-**Umbrales:** 5 min (reglas 2 y 8), 3 min (regla 4), 2 min (regla 6). Regla 5: 3 min desde la última apertura en sesiones vivas; en sesiones terminadas (falla, expiración) aplica de inmediato. Las reglas 2, 4 y 5 no aplican a sesiones pagadas. Ajustado el 2026-10-28 tras la primera tanda de pruebas: un reintento que luego pagaba quedaba diagnosticado para siempre. Se siguen ajustando con datos de uso real en la semana 3.
+**Umbrales:** 5 min (reglas 2 y 8), 3 min (regla 4), 2 min (regla 6). Regla 5: 3 min desde la última apertura en sesiones vivas; en sesiones terminadas (falla, expiración) aplica de inmediato. Las reglas 2, 4 y 5 no aplican a sesiones pagadas. Ajustado el 2026-10-28 tras la primera tanda de pruebas: un reintento que luego pagaba quedaba diagnosticado para siempre.
 
 **Qué recibe el LLM:** solo `rule_id`, severidad y los números que usa la regla (minutos transcurridos, cantidad de intentos). Nunca el payload ni llaves.
 
@@ -86,12 +86,26 @@ Decisiones de producto y arquitectura tomadas por el autor del proyecto, escrita
 
 **Por qué:** la base se consulta solo desde el servidor (CLAUDE.md 12.1); Looker Studio exigiría abrirla a un tercero con credenciales persistentes. El selector "solo yo / todos" es un `where` en SQL; en un panel público de Looker sería un filtro que cualquiera puede quitar. Todo el SQL queda en el repo y se puede explicar línea por línea. Son cuatro tablas con cientos de filas: sin necesidad de herramienta externa ni dependencias nuevas.
 
-**Descartado:** Looker Studio embebido (cuenta extra, lógica fuera del repo, acceso de terceros a la base). "Visitas a `/`" queda fuera por ahora: hoy no se registra la visita y exigiría un evento más desde el navegador; se agrega si hace falta en la semana 3.
+**Descartado:** Looker Studio embebido (cuenta extra, lógica fuera del repo, acceso de terceros a la base). "Visitas a `/`" queda fuera: el funnel parte en la sesión creada, y registrar la visita exigiría un evento más desde el navegador.
 
 ---
 
-## Pendientes (en orden de necesidad)
+## 2026-11-11 — Redacción del diagnóstico con LLM: Claude Haiku 5.5
 
-- Reglas primero, LLM después: por qué y qué cuesta cada diagnóstico.
-- Qué partes del código son del proveedor (Fintoc) y cuáles propias y reutilizables.
-- Proveedor y modelo del LLM para la redacción del diagnóstico.
+**Decisión:** las reglas determinísticas deciden el diagnóstico; el LLM solo redacta la explicación y el siguiente paso. Proveedor: Anthropic. Modelo: Claude Haiku 5.5 (`claude-haiku-5-5`), llamado con `fetch`, sin SDK. Una llamada por sesión diagnosticada, `max_tokens` 400, timeout de 6 s. El LLM recibe solo `rule_id`, severidad y los números de la regla. Si el LLM falla, demora, no hay llave o la respuesta trae cifras que no están en esos datos, se guarda el texto fijo de la regla.
+
+**Por qué:** el diagnóstico tiene que ser reproducible y explicable: con los mismos eventos, la misma regla, siempre. Así puedo testearlo, decir exactamente por qué salió y medirlo por `rule_id` en `/metrics`; decidir no cuesta nada ni depende de un tercero. El LLM entra solo donde aporta: convertir la regla y sus números en una explicación que entienda el dueño de un comercio, como lo haría un agente de Soporte. Si se cae, el producto sigue funcionando igual con el texto fijo. Claude, porque ya es la herramienta con la que construí el proyecto, y Haiku 5.5 está en el piso de precios del mercado para una tarea de dos frases.
+
+**Costo:** USD 0,10 por millón de tokens de entrada y USD 0,50 por millón de salida (página oficial de precios, 2026-11-11). Peor caso por diagnóstico (unos 600 tokens de entrada y 400 de salida): menos de USD 0,0003. Mil diagnósticos: menos de USD 0,30. Límite de gasto mensual en la consola: USD 10.
+
+**Descartado:** que el LLM decida el diagnóstico (no es reproducible ni testeable, puede inventar una causa y cada sesión costaría una llamada). El SDK de Anthropic (una dependencia nueva para una sola llamada; mismo criterio que con el cliente de Fintoc). Modelos más grandes (innecesarios para redactar dos frases). Gemini 3.5 Flash-Lite (más caro por token) y GPT-6 Luna (mismo precio, sin ventaja que justifique otro proveedor). Enviar el payload del webhook para dar más contexto (los datos del pago no salen del servidor).
+
+---
+
+## 2026-11-11 — Qué es del proveedor y qué es propio
+
+**Decisión:** todo lo que depende de Fintoc vive en tres lugares: `lib/fintoc.ts` (API y firma del webhook), `lib/widget.ts` (widget) y los nombres de eventos que interpreta `lib/webhook.ts`. El resto es propio y no conoce al proveedor: el esquema de datos, los eventos de funnel, el motor de reglas, `/metrics` y la redacción del diagnóstico.
+
+**Por qué:** lo que quiero mostrar no es una integración con Fintoc, sino un sistema para medir y diagnosticar la activación de un producto de pagos. Con la frontera clara puedo decir qué parte es mérito del proveedor y cuál es mía, y cambiar de proveedor sería reescribir un archivo y un mapeo de eventos, no el producto.
+
+**Descartado:** una capa de abstracción para varios proveedores (generalizar antes de necesitarlo). Usar el SDK oficial (ya descartado en la entrada del cliente de Fintoc).
