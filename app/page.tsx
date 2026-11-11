@@ -1,11 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { tokenKey } from "@/lib/widget";
-import { buttonPrimary, Card, Page, PageHeader, TestBadge } from "./ui";
+import { buttonPrimary, Card, LinkButton, Page, PageHeader, TestBadge } from "./ui";
 
 const CHANNELS = [
   { id: "shopify", label: "Shopify", hint: "Uso el plugin oficial en mi tienda" },
@@ -62,18 +61,15 @@ export default function Home() {
         ))}
       </ol>
 
-      <Link
-        href="/casos"
-        className="flex items-start gap-3 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900 transition hover:border-amber-500 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-200"
-      >
-        <span className="text-lg leading-none">💡</span>
-        <span>
-          <span className="font-medium">Antes de pagar, revisa los casos a probar →</span>
-          <span className="mt-0.5 block opacity-90">
+      <Card className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="font-medium">Antes de pagar, revisa los casos a probar</p>
+          <p className="mt-0.5 text-sm text-muted">
             El banco de prueba tiene cuentas que terminan en éxito, falla o pendiente. Así provocas cada diagnóstico.
-          </span>
-        </span>
-      </Link>
+          </p>
+        </div>
+        <LinkButton href="/casos" secondary>Ver casos a probar</LinkButton>
+      </Card>
 
       <Card>
         <h2 className="mb-3 font-semibold">¿Cómo vendes hoy?</h2>
