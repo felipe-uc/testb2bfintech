@@ -135,3 +135,11 @@ Reemplaza la entrada anterior del mismo día ("consultar la checkout session").
 **Por qué:** es un ambiente de prueba sin usuarios externos; separar las sesiones del autor del resto no aporta nada.
 
 **Descartado:** mantener el selector como estaba (2026-10-28).
+
+## 2026-11-11 — `/metrics`: paso "llegó al banco" y rechazos del banco
+
+**Decisión:** el funnel por paso agrega "Llegó al banco" entre "Widget abierto" y "Autorización", contado con el evento del widget `payment_in_progress` (una vez por sesión). Debajo de los diagnósticos por regla se agrega un bloque "Rechazos del banco" con dos cifras: con razón conocida (hay `payment_rejected_in_bank` con `error_reason`) y sin razón todavía, más el desglose por `error_reason`.
+
+**Por qué:** el rechazo del banco es el fallo más frecuente en las pruebas y ocurría en un hueco del funnel: entre "Widget abierto" y "Autorización" no se veía nada. Con los eventos del widget ya se sabe quién llegó al banco, y con la consulta diferida se sabe por qué fue rechazado.
+
+**Descartado:** meter todos los eventos del widget en el funnel (ruido; solo importa el que marca la llegada al banco); contar rechazos desde los eventos del widget en vez de los diagnósticos (duplicaría la lógica de la regla).
