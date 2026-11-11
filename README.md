@@ -91,7 +91,7 @@ Navegador ──POST /api/sessions──▶ Next.js (Vercel) ──POST /v2/chec
 ```bash
 cp .env.example .env.local   # pegar llaves sk_test_/pk_test_, whsec_, DATABASE_URL, LLM_API_KEY
 npm install
-npm test                     # 52 tests: firma de webhook, idempotencia, confirmación de pago, motor de reglas, LLM
+npm test                     # 55 tests: firma de webhook, idempotencia, confirmación de pago, motor de reglas, LLM
 npm run dev
 ```
 

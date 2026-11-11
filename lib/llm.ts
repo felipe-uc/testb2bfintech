@@ -23,7 +23,7 @@ export const RULE_CATALOG: Record<string, string> = {
   widget_load_error:
     "El widget de pago no pudo cargar. Acción: llave pública inválida o script bloqueado; verificar la llave pk_test_ y los bloqueadores del navegador.",
   bank_rejected:
-    "El banco rechazó el pago dentro del widget y Fintoc registró la razón en el payment intent; no llegó webhook porque la sesión sigue abierta. Acción: según la razón; para new_contact_amount_limit_reached, sugerir un monto menor o repetir el pago.",
+    "El banco rechazó el pago dentro del widget; no llegó webhook porque la sesión sigue abierta y la razón (error_reason) puede ser unknown hasta que la sesión expire. Acción: sugerir reintentar con otra cuenta; si la razón es new_contact_amount_limit_reached, sugerir un monto menor o repetir el pago.",
   abandoned_in_widget:
     "El widget se abrió pero no hubo autorización del banco ni webhook. Acción: abandono dentro del banco; no requiere acción técnica.",
   widget_reopened:

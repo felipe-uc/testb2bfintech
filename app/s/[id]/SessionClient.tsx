@@ -29,6 +29,7 @@ const STEP_LABELS: Record<string, string> = {
   widget_closed: "Widget cerrado sin completar",
   widget_error: "Error en el widget",
   payment_rejected_in_bank: "El banco rechazó el pago",
+  bank_lookup_done: "Consulta a Fintoc por la razón del rechazo",
   authorization_completed: "Autorización completada en el banco",
   webhook_verified: "Webhook recibido y firma verificada",
   payment_confirmed: "Pago confirmado",

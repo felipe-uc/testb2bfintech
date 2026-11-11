@@ -83,11 +83,32 @@ describe("diagnose", () => {
     assert.equal(d?.severity, "alta");
   });
 
-  it("bank_rejected wins over abandoned_in_widget and carries the error_reason", () => {
+  it("bank_rejected fires immediately on the widget signal after payment_in_progress", () => {
+    const funnel = [
+      { step: "session_created", at: T0 },
+      { step: "widget_opened", at: min(1) },
+      { step: "widget_event", at: min(1), metadata: { type: "payment_in_progress" } },
+      { step: "widget_event", at: min(2), metadata: { type: "back-to-checkout-buttons" } },
+    ];
+    const d = diagnose(snapshot({ funnel, now: min(2) }));
+    assert.equal(d?.ruleId, "bank_rejected");
+    assert.equal(d?.facts.error_reason, "unknown");
+    assert.match(d?.explanation ?? "", /no disponible/);
+  });
+
+  it("bank_rejected ignores back-to-checkout-buttons before a payment started", () => {
     const funnel = [
       { step: "session_created", at: T0 },
       { step: "widget_opened", at: min(1) },
       { step: "widget_event", at: min(2), metadata: { type: "back-to-checkout-buttons" } },
+    ];
+    assert.equal(diagnose(snapshot({ funnel, now: min(2) })), null);
+  });
+
+  it("bank_rejected carries the stored error_reason and wins over abandoned_in_widget", () => {
+    const funnel = [
+      { step: "session_created", at: T0 },
+      { step: "widget_opened", at: min(1) },
       { step: "payment_rejected_in_bank", at: min(2), metadata: { error_reason: "new_contact_amount_limit_reached" } },
     ];
     const d = diagnose(snapshot({ funnel, now: min(10) }));

@@ -8,7 +8,8 @@
  */
 import { db, insertFunnelEvent, listFunnelEvents, listPaymentEvents, type SessionRow } from "../db";
 import { getCheckoutSession } from "../fintoc";
-import { fetchBankRejection } from "./bank-rejection.ts";
+import { bankRejectedText } from "./04-bank-rejected.ts";
+import { fetchBankRejectionReason } from "./bank-rejection.ts";
 import { draftWording } from "../llm";
 import { diagnose, type Diagnosis } from "./index";
 
@@ -25,22 +26,43 @@ const readDiagnostics = (sessionId: string) => db()<StoredDiagnostic[]>`
   from diagnostics where session_id = ${sessionId} order by created_at
 `;
 
-export async function ensureDiagnostic(session: SessionRow): Promise<StoredDiagnostic[]> {
-  const existing = await readDiagnostics(session.id);
-  if (existing.length) return existing;
-
-  const [storedFunnel, webhooks] = await Promise.all([
-    listFunnelEvents(session.id),
-    listPaymentEvents(session.id),
-  ]);
-  const funnel = await fetchBankRejection({
+/**
+ * Enriquecimiento diferido de `bank_rejected`: cuando la sesión expiró,
+ * consulta a Fintoc una vez y, si hay razón, reemplaza el texto fijo del
+ * diagnóstico. No llama al LLM.
+ */
+async function enrichBankRejected(session: SessionRow, existing: StoredDiagnostic[]): Promise<StoredDiagnostic[]> {
+  const current = existing[0];
+  if (!current || current.rule_id !== "bank_rejected") return existing;
+  const [funnel, webhooks] = await Promise.all([listFunnelEvents(session.id), listPaymentEvents(session.id)]);
+  if (funnel.some((e) => e.step === "payment_rejected_in_bank")) return existing;
+  const result = await fetchBankRejectionReason({
     sessionId: session.id,
     fintocSessionId: session.fintoc_session_id,
-    funnel: storedFunnel,
-    webhookCount: webhooks.length,
+    expiresAt: session.expires_at,
+    now: new Date(),
+    funnel,
+    sessionExpiredByWebhook: webhooks.some((w) => w.event_type === "checkout_session.expired"),
     fetchSession: getCheckoutSession,
     insert: insertFunnelEvent,
   });
+  if (!result.looked || result.reason === null) return existing;
+  const text = bankRejectedText(result.reason);
+  await db()`
+    update diagnostics set explanation = ${text.explanation}, next_step = ${text.nextStep}
+    where session_id = ${session.id} and rule_id = 'bank_rejected'
+  `;
+  return [{ ...current, explanation: text.explanation, next_step: text.nextStep }];
+}
+
+export async function ensureDiagnostic(session: SessionRow): Promise<StoredDiagnostic[]> {
+  const existing = await readDiagnostics(session.id);
+  if (existing.length) return enrichBankRejected(session, existing);
+
+  const [funnel, webhooks] = await Promise.all([
+    listFunnelEvents(session.id),
+    listPaymentEvents(session.id),
+  ]);
   const result: Diagnosis | null = diagnose({
     status: session.status,
     createdAt: session.created_at,

@@ -74,7 +74,7 @@ Activation Lab es una URL pública donde cualquier persona completa el flujo rea
 - Webhooks en local: túnel con ngrok. En producción: route handler en Vercel.
 - Diagnóstico: reglas en TypeScript puro, una por archivo. Se evalúan al leer la sesión (`GET /api/sessions/[id]`) y se guardan una sola vez en `diagnostics`.
 - Redacción: `lib/llm.ts` llama a la API de Anthropic (Claude Haiku 5.5) con `fetch`, sin SDK. Recibe solo `rule_id`, severidad y los `facts` de la regla; `max_tokens` 400, timeout de 6 s. La respuesta se valida (formato, largo, sin cifras inventadas) y cualquier fallo deja el texto fijo de la regla.
-- Tests: `node --test`, 52 tests (firma de webhook, idempotencia, confirmación de pago, motor de reglas, redacción con LLM).
+- Tests: `node --test`, 55 tests (firma de webhook, idempotencia, confirmación de pago, motor de reglas, redacción con LLM).
 
 ### Páginas
 
@@ -168,7 +168,7 @@ El plan original era de tres semanas (semana 1: llegar vivo a producción; seman
 ### Agregado después del lanzamiento
 
 - 2026-11-11: redacción del diagnóstico con LLM (`lib/llm.ts`).
-- 2026-11-11: regla `bank_rejected`: consulta única a la checkout session de Fintoc cuando el banco rechaza dentro del widget y no hay webhook (`lib/diagnostics/bank-rejection.ts`).
+- 2026-11-11: regla `bank_rejected`: diagnóstico inmediato por señal del widget (`back-to-checkout-buttons` / `payment_error`) y razón consultada a Fintoc una sola vez cuando la sesión expira (`lib/diagnostics/bank-rejection.ts`).
 
 ---
 
