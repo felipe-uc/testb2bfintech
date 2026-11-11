@@ -45,7 +45,7 @@ Activation Lab es una URL pública donde cualquier persona completa el flujo rea
 - Instrumentación de eventos de funnel en cada paso (tabla propia `funnel_events`).
 - Pregunta inicial "¿cómo vendes hoy?" con cuatro opciones (Shopify / WooCommerce o VTEX / API propia / aún no vendo online), guardada como canal de la sesión.
 - `/casos`: usuarios y cuentas del banco de prueba que terminan en éxito, falla o pendiente, para provocar cada diagnóstico. Fuente: documentación pública de Fintoc ("Test your integration").
-- `/metrics` pública: etapas del onboarding completo, funnel por paso y por canal, tiempos, diagnósticos por regla; selector "solo yo / todos".
+- `/metrics` pública: etapas del onboarding completo, funnel por paso y por canal, tiempos, diagnósticos por regla. Sin selector "solo yo / todos" desde el 2026-11-11: muestra todas las sesiones.
 - Repo público en GitHub (`felipe-uc/testb2bfintech`) con `README.md` (incluye el diagrama de arquitectura) y `DECISIONS.md`.
 - Dominio propio con nombre neutro (`testb2bfintech.app`). Aviso "No afiliado a Fintoc" al pie de todas las páginas.
 
@@ -82,7 +82,7 @@ Activation Lab es una URL pública donde cualquier persona completa el flujo rea
 /            inicio: pregunta "¿cómo vendes hoy?" y botón para crear sesión
 /s/[id]      sesión: widget + línea de tiempo en vivo + diagnóstico si aplica
 /casos       usuarios y cuentas del banco de prueba para provocar cada resultado
-/metrics     panel público de funnel, con selector "solo yo / todos"
+/metrics     panel público de funnel (todas las sesiones)
 ```
 
 ### Endpoints
@@ -161,7 +161,7 @@ El plan original era de tres semanas (semana 1: llegar vivo a producción; seman
 - Flujo completo contra sandbox: `POST /api/sessions` → widget → pago con banco de prueba → webhook guardado con firma verificada.
 - Eventos de funnel en cada paso y línea de tiempo en vivo en `/s/[id]`.
 - Motor de reglas de diagnóstico (10 reglas), con umbrales ajustados tras la primera tanda de pruebas. La regla `widget_reopened` nació de un fallo real en esas pruebas.
-- `/metrics` con consultas directas, selector "solo yo / todos" y funnel por canal.
+- `/metrics` con consultas directas, selector "solo yo / todos" (retirado el 2026-11-11) y funnel por canal.
 - `/casos`, navegación y estilos propios.
 - `DECISIONS.md` escrito a medida que se decidía.
 
@@ -174,7 +174,7 @@ El plan original era de tres semanas (semana 1: llegar vivo a producción; seman
 
 ## 7. Métricas que expone `/metrics`
 
-Solo agregados, con selector "solo yo / todos". En este orden:
+Solo agregados de todas las sesiones (el selector "solo yo / todos" se retiró el 2026-11-11; `is_owner` se sigue guardando). En este orden:
 
 1. Etapas del onboarding completo de un comercio (registro en el Dashboard → verificación del negocio → habilitación de productos → integración → primer pago de prueba → paso a live → primer pago real), marcando cuáles instrumenta este proyecto: solo integración y primer pago de prueba.
 2. Funnel por paso, en total y por canal: sesión creada → widget abierto → autorización → webhook verificado → pago confirmado, con conversión contra el paso anterior y acumulada.
@@ -244,7 +244,7 @@ Instrucciones ejecutables, no explicaciones de concepto. Si un concepto es neces
 - Que parezca herramienta para developers y no de growth. Mitigación: el panel de funnel y la narrativa de activación, no de API.
 - Primer deploy del proyecto. Mitigación: hola mundo en producción el día 1; nada se construye sin URL viva.
 - Demo en vivo falla. Mitigación: ensayar antes con las cuentas de `/casos`, que reproducen cada escenario.
-- Inflar números con pruebas propias. Mitigación: `is_owner` y selector "solo yo / todos".
+- Inflar números con pruebas propias. Mitigación: `is_owner` se sigue guardando por sesión; el selector público "solo yo / todos" se retiró el 2026-11-11.
 
 ### Descartado y por qué
 

@@ -1,9 +1,8 @@
-import Link from "next/link";
 import { Suspense } from "react";
 
 import { Badge, Card, CardTitle, Page, PageHeader } from "../ui";
 
-import { FUNNEL_STEPS, getMetrics, type FunnelRow, type Scope } from "@/lib/metrics";
+import { FUNNEL_STEPS, getMetrics, type FunnelRow } from "@/lib/metrics";
 
 const STAGES = [
   { label: "Registro en el Dashboard", instrumented: false },
@@ -31,27 +30,40 @@ const CHANNEL_LABELS: Record<string, string> = {
   none: "Aún no vende online",
 };
 
+/** Nombre legible de cada regla (DECISIONS.md, "Reglas de diagnóstico"). */
+const RULE_LABELS: Record<string, string> = {
+  expired_without_widget: "Expiró sin abrir el widget",
+  widget_never_opened: "Nunca abrió el widget",
+  widget_load_error: "El widget no cargó",
+  bank_rejected: "El banco rechazó en el widget",
+  abandoned_in_widget: "Abandonó dentro del banco",
+  widget_reopened: "Reabrió el widget",
+  authorized_without_webhook: "Autorizó y no llegó webhook",
+  webhook_invalid_signature: "Webhook con firma inválida",
+  payment_pending: "Pago pendiente",
+  payment_failed: "Pago fallido según webhook",
+  webhook_without_session: "Webhook sin sesión",
+};
+
 const pct = (n: number, d: number) => (d ? `${Math.round((n / d) * 100)}%` : "–");
 const secs = (s: number | null) =>
   s === null ? "–" : s < 90 ? `${Math.round(s)} s` : `${(s / 60).toFixed(1)} min`;
 
-export default function MetricsPage({ searchParams }: { searchParams: Promise<{ scope?: string }> }) {
+export default function MetricsPage() {
   return (
     <Page wide>
       <PageHeader eyebrow="Activation Lab" title="Funnel de activación">
         <p>Solo agregados. Entorno de prueba, sin dinero real.</p>
       </PageHeader>
       <Suspense fallback={<p className="text-muted">Cargando…</p>}>
-        <Content searchParams={searchParams} />
+        <Content />
       </Suspense>
     </Page>
   );
 }
 
-async function Content({ searchParams }: { searchParams: Promise<{ scope?: string }> }) {
-  const { scope: raw } = await searchParams;
-  const scope: Scope = raw === "mine" ? "mine" : "all";
-  const m = await getMetrics(scope);
+async function Content() {
+  const m = await getMetrics();
 
   return (
     <>
@@ -80,12 +92,7 @@ async function Content({ searchParams }: { searchParams: Promise<{ scope?: strin
         </p>
       </Card>
 
-      <div className="flex items-center gap-2 text-sm">
-        <span className="text-muted">Ver:</span>
-        <ScopeLink current={scope} value="all" label="todos" />
-        <ScopeLink current={scope} value="mine" label="solo yo" />
-        <span className="ml-auto text-muted">{m.sessions} sesiones</span>
-      </div>
+      <p className="text-right text-sm text-muted">{m.sessions} sesiones en total</p>
 
       <Card>
         <CardTitle hint="sesiones · conversión vs. paso anterior · acumulada">Funnel por paso y por canal</CardTitle>
@@ -123,7 +130,10 @@ async function Content({ searchParams }: { searchParams: Promise<{ scope?: strin
             <tbody>
               {m.diagnostics.map((d) => (
                 <tr key={d.rule_id} className="border-t border-line">
-                  <td className="py-2 pr-3 font-mono text-xs">{d.rule_id}</td>
+                  <td className="py-2 pr-3">
+                    <span className="block">{RULE_LABELS[d.rule_id] ?? d.rule_id}</span>
+                    <span className="block font-mono text-xs text-muted">{d.rule_id}</span>
+                  </td>
                   <td className="py-2 pr-3">
                     <Badge tone={d.severity === "crítica" ? "bad" : d.severity === "alta" ? "warn" : "neutral"}>{d.severity}</Badge>
                   </td>
@@ -135,21 +145,6 @@ async function Content({ searchParams }: { searchParams: Promise<{ scope?: strin
         )}
       </Card>
     </>
-  );
-}
-
-function ScopeLink({ current, value, label }: { current: Scope; value: Scope; label: string }) {
-  const active = current === value;
-  return (
-    <Link
-      href={value === "all" ? "/metrics" : `/metrics?scope=${value}`}
-      aria-current={active ? "page" : undefined}
-      className={`rounded-full border px-3 py-1 transition ${
-        active ? "border-foreground bg-foreground text-background" : "border-line hover:border-stone-400"
-      }`}
-    >
-      {label}
-    </Link>
   );
 }
 

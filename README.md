@@ -20,7 +20,7 @@ En self-serve el revenue es comercios activados × TPV. El paso que nadie acompa
 4. **Muestra la línea de tiempo en vivo** en [`/s/[id]`](https://testb2bfintech.app): sesión creada → widget abierto → autorización → webhook verificado → pago confirmado.
 5. **Diagnostica lo que no llegó a término.** Un motor de once reglas determinísticas, ordenadas como revisa un agente de Soporte, decide un diagnóstico por sesión (por ejemplo: el banco autorizó hace 3 minutos y no ha llegado ningún webhook). Un LLM redacta la explicación y el siguiente paso; no decide nada.
 6. **Deja provocar cada caso.** [`/casos`](https://testb2bfintech.app/casos) lista los usuarios y cuentas del banco de prueba que terminan en éxito, falla o pendiente.
-7. **Publica el funnel.** [`/metrics`](https://testb2bfintech.app/metrics) muestra solo agregados, con selector "solo yo / todos" para separar las pruebas del autor del uso de terceros.
+7. **Publica el funnel.** [`/metrics`](https://testb2bfintech.app/metrics) muestra solo agregados de todas las sesiones. Las del autor siguen marcadas con `is_owner` en la base, pero el panel ya no las separa.
 
 **Qué cuenta como "activado":** webhook recibido con firma válida y pago exitoso (`checkout_session.finished` con `payment_intent.status = succeeded`, o `payment_intent.succeeded`). Ni el `onSuccess` del widget ni el estado leído por API cuentan. La razón está en `DECISIONS.md`.
 

@@ -4,8 +4,6 @@
  */
 import { db, type Channel } from "./db";
 
-export type Scope = "all" | "mine";
-
 /** Pasos del funnel en orden; `session_created` se cuenta desde `sessions`. */
 export const FUNNEL_STEPS = [
   "session_created",
@@ -22,7 +20,6 @@ export interface FunnelRow {
 }
 
 export interface Metrics {
-  scope: Scope;
   funnel: FunnelRow[];
   timing: { median_s: number | null; p90_s: number | null; paid: number };
   diagnostics: { rule_id: string; severity: string; n: number }[];
@@ -31,12 +28,10 @@ export interface Metrics {
   sessions: number;
 }
 
-const ownerFilter = (scope: Scope) =>
-  scope === "mine" ? db()`and s.is_owner = true` : db()``;
-
-export async function getMetrics(scope: Scope): Promise<Metrics> {
+export async function getMetrics(): Promise<Metrics> {
   const sql = db();
-  const owner = ownerFilter(scope);
+  // Sin filtro por is_owner: /metrics muestra todas las sesiones (DECISIONS.md, 2026-11-11).
+  const owner = sql``;
 
   const funnelRows = await sql<
     { channel: Channel; step: string; n: number }[]
@@ -114,7 +109,6 @@ export async function getMetrics(scope: Scope): Promise<Metrics> {
   `;
 
   return {
-    scope,
     funnel,
     timing,
     diagnostics,
