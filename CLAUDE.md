@@ -8,7 +8,7 @@ Archivo de instrucciones para Claude Code. Se lee al inicio de cada sesión. Con
 
 ## 1. Propósito y para quién es
 
-Activation Lab es una URL pública donde cualquier persona completa el flujo real de un producto de pagos por transferencia (Fintoc, en modo test) desde "quiero cobrar" hasta el webhook de pago confirmado, mientras el sistema mide cada paso del funnel y diagnostica solo por qué un intento no llegó a término. Es un proyecto personal, construido en pocas semanas con Claude Code como copiloto, para demostrar de forma verificable (URL viva, repo público, uso real) que se puede llevar software de local a producción con ayuda de IA. El proyecto cubre el tramo técnico del onboarding de un comercio self-serve (desde que tiene llaves de test hasta su primer pago de prueba con webhook verificado); no cubre el registro ni la verificación del negocio, que viven dentro de Fintoc.
+Activation Lab es una URL pública donde cualquier persona completa el flujo real de un producto de pagos por transferencia (Fintoc, en modo test) desde "quiero cobrar" hasta el webhook de pago confirmado, mientras el sistema mide cada paso del funnel y diagnostica solo por qué un intento no llegó a término. Es un proyecto personal, construido y lanzado a producción en dos días (https://testb2bfintech.app) con Claude Code como copiloto, para demostrar de forma verificable (URL viva, repo público, uso real) que se puede llevar software de local a producción con ayuda de IA. El proyecto cubre el tramo técnico del onboarding de un comercio self-serve (desde que tiene llaves de test hasta su primer pago de prueba con webhook verificado); no cubre el registro ni la verificación del negocio, que viven dentro de Fintoc.
 
 ---
 
@@ -35,19 +35,19 @@ Activation Lab es una URL pública donde cualquier persona completa el flujo rea
 
 ---
 
-## 4. Alcance del MVP
+## 4. Alcance
 
-### Dentro
+### En producción (https://testb2bfintech.app)
 
-- Camino API completo contra el sandbox de Fintoc (Payment Initiation): crear sesión de cobro → abrir widget → autorizar con banco de prueba → `payment_intent` confirmado → webhook recibido y firma verificada → conciliado.
-- Página de sesión con línea de tiempo en vivo de esos pasos.
-- Diagnóstico automático cuando un intento no llega a término: motor de reglas determinístico (8–10 reglas) y LLM solo para redactar la explicación en castellano y sugerir el siguiente paso.
-- Instrumentación de eventos de funnel en cada paso.
-- Pregunta inicial "¿cómo vendes hoy?" con cuatro opciones (Shopify / WooCommerce o VTEX / API propia / aún no vendo online), guardada como atributo de la sesión.
-- `/metrics` pública con el funnel por paso y por canal, con selector "solo yo / todos".
-- Repo público en GitHub con `README.md`, `DECISIONS.md` y diagrama de arquitectura.
-- Dominio propio con nombre neutro. Aviso "No afiliado a Fintoc".
-- Semana 3: camino plugin **modelado, no instrumentado**: checklist de activación (plugin instalado, llaves configuradas, método visible en checkout, primera orden de prueba) que el usuario marca, con reglas de diagnóstico simples. Marcado así en el README.
+- Camino API completo contra el sandbox de Fintoc (Payment Initiation): crear sesión de cobro (1.000 CLP de prueba, expira a los 15 min) → abrir widget → autorizar con banco de prueba → webhook recibido con firma verificada → pago confirmado.
+- Página de sesión `/s/[id]` con línea de tiempo en vivo de esos pasos (polling cada 4 s, tope de 15 min).
+- Diagnóstico automático cuando un intento no llega a término: motor de reglas determinístico con 10 reglas (9 se evalúan por sesión; `webhook_without_session` no se asocia a una sesión y solo cuenta en `/metrics`). Las reglas deciden el diagnóstico; un LLM (Claude Haiku 5.5) solo redacta la explicación y el siguiente paso, una vez por sesión. Si el LLM falla o no hay llave, queda el texto fijo de la regla.
+- Instrumentación de eventos de funnel en cada paso (tabla propia `funnel_events`).
+- Pregunta inicial "¿cómo vendes hoy?" con cuatro opciones (Shopify / WooCommerce o VTEX / API propia / aún no vendo online), guardada como canal de la sesión.
+- `/casos`: usuarios y cuentas del banco de prueba que terminan en éxito, falla o pendiente, para provocar cada diagnóstico. Fuente: documentación pública de Fintoc ("Test your integration").
+- `/metrics` pública: etapas del onboarding completo, funnel por paso y por canal, tiempos, diagnósticos por regla; selector "solo yo / todos".
+- Repo público en GitHub (`felipe-uc/testb2bfintech`) con `README.md` (incluye el diagrama de arquitectura) y `DECISIONS.md`.
+- Dominio propio con nombre neutro (`testb2bfintech.app`). Aviso "No afiliado a Fintoc" al pie de todas las páginas.
 
 ### Fuera (no construir aunque parezca fácil)
 
@@ -57,28 +57,31 @@ Activation Lab es una URL pública donde cualquier persona completa el flujo rea
 - Chatbot sobre documentación.
 - Recuperación de pagos abandonados por email o WhatsApp.
 - Automatizaciones en n8n / Zapier.
-- Generalizar el código "para que sirva para todo" antes de tener la URL viva.
+- Generalizar el código "para que sirva para todo".
 
 ---
 
-## 5. Arquitectura mínima
+## 5. Arquitectura (como está en producción)
 
-### Stack (decidido)
+### Stack
 
-- Frontend y backend: Next.js (App Router) + TypeScript.
-- Deploy: Vercel. Dominio propio (~USD 10), nombre neutro.
-- Base de datos: Postgres (Supabase o Neon; ver preguntas abiertas).
-- Proveedor de pagos: API de Fintoc en modo test. SDK oficial de Node si existe; si no, `fetch` directo.
-- Eventos de producto: tabla propia `funnel_events` (PostHog opcional; ver preguntas abiertas).
-- Panel: Looker Studio conectado directo a Postgres, embebido en `/metrics` o consultas directas desde Next.js.
+- Frontend y backend: Next.js 16 (App Router) + TypeScript + Tailwind 4.
+- Deploy: Vercel. Dominio propio `testb2bfintech.app`.
+- Base de datos: Postgres en Supabase, conectado solo desde el servidor con el driver `postgres` (única dependencia de runtime fuera de Next y React). Sin SDK ni Data API de Supabase.
+- Proveedor de pagos: API de Fintoc en modo test, con cliente propio (`fetch` y `crypto` nativos) en `lib/fintoc.ts`. Sin SDK.
+- Eventos de producto: tabla propia `funnel_events`. Sin PostHog.
+- Panel: `/metrics` consulta Postgres desde el servidor con SQL propio (`lib/metrics.ts`). Sin Looker Studio ni librería de gráficos.
 - Webhooks en local: túnel con ngrok. En producción: route handler en Vercel.
-- Diagnóstico: reglas en TypeScript puro; LLM solo para redacción, con el resultado de las reglas como input.
+- Diagnóstico: reglas en TypeScript puro, una por archivo. Se evalúan al leer la sesión (`GET /api/sessions/[id]`) y se guardan una sola vez en `diagnostics`.
+- Redacción: `lib/llm.ts` llama a la API de Anthropic (Claude Haiku 5.5) con `fetch`, sin SDK. Recibe solo `rule_id`, severidad y los `facts` de la regla; `max_tokens` 400, timeout de 6 s. La respuesta se valida (formato, largo, sin cifras inventadas) y cualquier fallo deja el texto fijo de la regla.
+- Tests: `node --test`, 47 tests (firma de webhook, idempotencia, confirmación de pago, motor de reglas, redacción con LLM).
 
 ### Páginas
 
 ```
 /            inicio: pregunta "¿cómo vendes hoy?" y botón para crear sesión
-/s/[id]      sesión: línea de tiempo en vivo + diagnóstico si aplica
+/s/[id]      sesión: widget + línea de tiempo en vivo + diagnóstico si aplica
+/casos       usuarios y cuentas del banco de prueba para provocar cada resultado
 /metrics     panel público de funnel, con selector "solo yo / todos"
 ```
 
@@ -114,76 +117,69 @@ diagnostics      id, session_id, rule_id, severity, explanation, next_step, crea
 
 ```
 /app
-  /page.tsx
-  /s/[id]/page.tsx
-  /metrics/page.tsx
+  /page.tsx                        inicio: canal + crear sesión
+  /s/[id]/page.tsx                 sesión
+  /s/[id]/SessionClient.tsx        widget + línea de tiempo (cliente)
+  /casos/page.tsx                  casos a probar
+  /metrics/page.tsx                panel de funnel
   /api/sessions/route.ts
   /api/sessions/[id]/route.ts
   /api/webhooks/payments/route.ts
   /api/events/route.ts
+  /layout.tsx · nav.tsx · ui.tsx   layout, navegación y componentes compartidos
 /lib
   /fintoc.ts        cliente de la API (crear sesión, verificar firma)
+  /webhook.ts       procesamiento del webhook, separado del route handler para testearlo
+  /widget.ts        helpers del widget en el navegador
   /db.ts            conexión y consultas
-  /diagnostics/     una regla por archivo + index.ts que las ordena
-  /llm.ts           redacción de la explicación a partir del resultado de reglas
+  /metrics.ts       consultas SQL de /metrics
+  /ratelimit.ts     límites por IP (hash en memoria)
+  /owner.ts         cookie secreta de owner
+  /diagnostics/     una regla por archivo + index.ts (orden) + run.ts (un diagnóstico por sesión)
+  /llm.ts           redacción del diagnóstico con LLM, con respaldo al texto fijo
 /db
-  /migrations/
-/docs
-  /architecture.md  diagrama
+  /migrations/001_initial.sql
 /.claude
   /settings.json    permisos de Claude Code (versionado; ver sección 13)
 DECISIONS.md
 README.md
 CLAUDE.md
+AGENTS.md           generado por Next.js
 .env.example
 .gitignore
 ```
 
 ---
 
-## 6. Plan semana a semana
+## 6. Cronología real
 
-### Semana 1 — llegar vivo a producción
+El plan original era de tres semanas (semana 1: llegar vivo a producción; semana 2: funnel, diagnóstico y `/metrics`; semana 3: uso real y pulido). **Lo que está en producción se construyó y lanzó en dos días.**
 
-- Días 1–2: cuentas (Fintoc Dashboard, GitHub, Vercel, Supabase/Neon, dominio). Repo con plantilla de Next.js. Deploy del "hola mundo" al dominio **el mismo día 1**.
-- Días 3–5: flujo completo contra sandbox: `POST /api/sessions` → widget → pago con banco de prueba → webhook guardado con firma verificada.
-- **Criterio de salida**: una URL donde el autor hace un pago test de punta a punta y queda registrado en Postgres. Sin UI bonita.
+### Hecho en esos dos días
 
-### Semana 2 — convertirlo en producto de growth
+- Cuentas (Fintoc Dashboard, GitHub, Vercel, Supabase), dominio y deploy del "hola mundo".
+- Flujo completo contra sandbox: `POST /api/sessions` → widget → pago con banco de prueba → webhook guardado con firma verificada.
+- Eventos de funnel en cada paso y línea de tiempo en vivo en `/s/[id]`.
+- Motor de reglas de diagnóstico (10 reglas), con umbrales ajustados tras la primera tanda de pruebas. La regla `widget_reopened` nació de un fallo real en esas pruebas.
+- `/metrics` con consultas directas, selector "solo yo / todos" y funnel por canal.
+- `/casos`, navegación y estilos propios.
+- `DECISIONS.md` escrito a medida que se decidía.
 
-- Eventos de funnel en cada paso. Línea de tiempo en vivo en `/s/[id]`.
-- Motor de reglas de diagnóstico + redacción con LLM.
-- `/metrics` con Looker Studio o consultas directas, selector "solo yo / todos", funnel por canal.
-- `DECISIONS.md` escrito a medida que se decide, no al final.
-- **Criterio de salida**: una persona que no es el autor completa el flujo sin ayuda.
+### Agregado después del lanzamiento
 
-### Semana 3 — uso real y pulido
-
-- Invitar 10–15 personas (developers conocidos, post en LinkedIn, comunidades de ecommerce chileno).
-- Corregir lo que rompan. Agregar al menos una regla de diagnóstico nacida de un fallo real.
-- Camino plugin modelado como checklist (ver sección 4).
-- Video de 90 s como respaldo de la demo.
-- Si sobra tiempo: sección "qué haría con esto en un producto de pagos real" en el README. No más código.
-- **Criterio de salida**: funnel con usuarios reales en `/metrics`, repo limpio, demo ensayada.
+- 2026-11-11: redacción del diagnóstico con LLM (`lib/llm.ts`).
 
 ---
 
 ## 7. Métricas que expone `/metrics`
 
-Todas con selector "solo yo / todos" y desglose por `channel`:
+Solo agregados, con selector "solo yo / todos". En este orden:
 
-- Vista de etapas del onboarding completo (las siete etapas de la sección 2), marcando visualmente cuáles están instrumentadas en este proyecto y cuáles no. Es la primera cosa que se ve en /metrics.
-- Visitas a `/`.
-- Sesiones creadas.
-- Widget abierto.
-- Autorización completada.
-- Pago confirmado.
-- Webhook recibido.
-- Webhook verificado (firma válida).
-- Conversión paso a paso y acumulada.
-- Mediana y p90 de tiempo entre sesión creada y pago confirmado.
-- Distribución de diagnósticos por `rule_id`.
-- Sesiones expiradas sin abrir el widget.
+1. Etapas del onboarding completo de un comercio (registro en el Dashboard → verificación del negocio → habilitación de productos → integración → primer pago de prueba → paso a live → primer pago real), marcando cuáles instrumenta este proyecto: solo integración y primer pago de prueba.
+2. Funnel por paso, en total y por canal: sesión creada → widget abierto → autorización → webhook verificado → pago confirmado, con conversión contra el paso anterior y acumulada.
+3. Mediana y p90 del tiempo entre sesión creada y pago confirmado.
+4. Sesiones expiradas sin abrir el widget.
+5. Diagnósticos por `rule_id`, más webhooks válidos sin sesión asociada (regla 10).
 
 ---
 
@@ -219,7 +215,7 @@ Si el autor pide código para algo de esta lista y no hay entrada en `DECISIONS.
 
 - El contenido es solo del autor: la decisión, la razón y lo descartado salen de lo que él dice, en sus palabras. Claude Code no inventa razones ni toma decisiones por él.
 - Claude Code sí puede editar el archivo, pero **solo con el OK explícito del autor** en cada cambio: el autor dicta la decisión, Claude Code propone la entrada con la estructura de abajo, y la escribe únicamente cuando el autor la aprueba. Sin OK, no se toca.
-- Formato fijo de cada entrada: `## AAAA-MM-DD — Tema`, luego **Decisión**, **Por qué**, **Descartado**. Una entrada por decisión, en orden cronológico. Al final del archivo, la lista de pendientes; cuando una decisión se toma, Claude Code la saca de pendientes al escribir la entrada.
+- Formato fijo de cada entrada: `## AAAA-MM-DD — Tema`, luego **Decisión**, **Por qué**, **Descartado**. Una entrada por decisión, en orden cronológico.
 - Si el autor cambia una decisión, se agrega una entrada nueva que referencia la anterior; no se edita ni borra la original.
 
 ### Convenciones de commits
@@ -246,8 +242,7 @@ Instrucciones ejecutables, no explicaciones de concepto. Si un concepto es neces
 
 - Que parezca herramienta para developers y no de growth. Mitigación: el panel de funnel y la narrativa de activación, no de API.
 - Primer deploy del proyecto. Mitigación: hola mundo en producción el día 1; nada se construye sin URL viva.
-- Camino plugin flojo porque no se puede probar sin cuenta live. Mitigación: marcado como "modelado, no instrumentado".
-- Demo en vivo falla. Mitigación: video de 90 s.
+- Demo en vivo falla. Mitigación: ensayar antes con las cuentas de `/casos`, que reproducen cada escenario.
 - Inflar números con pruebas propias. Mitigación: `is_owner` y selector "solo yo / todos".
 
 ### Descartado y por qué
@@ -274,20 +269,21 @@ Pregunta abierta para quien opere un producto así: "¿Qué porcentaje de los ti
 
 ---
 
-## 11. Preguntas abiertas para la primera sesión
+## 11. Decisiones tomadas
 
-- Nombre del proyecto y del dominio (neutro, sin "Fintoc").
-- ¿Existe SDK oficial de Fintoc para Node? Si no, cliente propio con `fetch`.
-- Nombre exacto del header de firma del webhook de Fintoc y algoritmo de verificación (verificar en docs.fintoc.com).
-- Tiempo de expiración real de una checkout session en Fintoc (en la conversación se usó "10 min" como ejemplo, no está verificado).
-- Supabase o Neon para Postgres.
-- Tabla propia `funnel_events` sola, o además PostHog.
-- Looker Studio embebido en `/metrics` o consultas directas desde Next.js.
-- Proveedor y modelo para la redacción del diagnóstico, y costo estimado por diagnóstico.
-- Lista inicial de las 8–10 reglas de diagnóstico (el autor la escribe en `DECISIONS.md` antes de la semana 2).
-- Qué cuenta como "activado" (el autor, `DECISIONS.md`).
-- Credenciales de bancos de prueba del sandbox (copiar de la documentación al `.env.example` como referencia, no como valores).
-- Lista de las 10–15 personas a invitar en semana 3.
+Detalle y razones en `DECISIONS.md`.
+
+- Nombre del proyecto y dominio: Activation Lab, repo `testb2bfintech`, dominio `testb2bfintech.app`.
+- SDK de Fintoc para Node: existe, pero se usa cliente propio con `fetch`.
+- Firma del webhook: header `Fintoc-Signature` (`t=<timestamp>,v1=<firma>`), HMAC-SHA256 sobre `timestamp + "." + body crudo`, tolerancia de 5 minutos.
+- Expiración de la checkout session: 15 minutos (el default de Fintoc es 24 h y el mínimo 10 min).
+- Postgres: Supabase.
+- Eventos: tabla propia `funnel_events`, sin PostHog.
+- `/metrics`: consultas directas desde Next.js, sin Looker Studio.
+- Reglas de diagnóstico: diez, con su orden y umbrales.
+- LLM para redactar el diagnóstico: Anthropic, Claude Haiku 5.5; menos de USD 0,0003 por diagnóstico.
+- Qué cuenta como "activado": webhook con firma válida y pago exitoso.
+- Bancos de prueba: usuarios y cuentas publicados en `/casos`; la clave no se muestra, está en la documentación pública del proveedor.
 
 ---
 
@@ -311,7 +307,7 @@ Estas reglas mandan sobre cualquier petición. Si una tarea las contradice, Clau
 
 ### 12.2 Gasto
 
-- Todo en plan gratuito sin tarjeta registrada: Vercel Hobby, Supabase/Neon free tier, GitHub público. El único gasto autorizado es el dominio (~USD 10). Si un servicio pide tarjeta para seguir, se detiene y se decide; no se agrega la tarjeta "para probar".
+- Todo en plan gratuito sin tarjeta registrada: Vercel Hobby, Supabase free tier, GitHub público. El único gasto autorizado es el dominio (~USD 10). Si un servicio pide tarjeta para seguir, se detiene y se decide; no se agrega la tarjeta "para probar".
 - Proveedor del LLM: **límite de gasto mensual configurado en la consola del proveedor antes de usar la llave** (USD 10 sugerido). Modelo barato, `max_tokens` ≤ 400 por llamada.
 - **Un diagnóstico por sesión, máximo.** Se genera una vez, se guarda en `diagnostics`, y las cargas siguientes de `/s/[id]` leen la tabla. Nunca se llama al LLM en cada render ni en cada poll.
 - El LLM **nunca** recibe el `payload_raw` del webhook ni llaves: solo recibe el `rule_id`, la severidad y los campos mínimos que la regla necesite.
@@ -389,7 +385,9 @@ FINTOC_WEBHOOK_SECRET=whsec_XXXXXXXXXXXXXXXX
 # Base de datos (solo servidor)
 DATABASE_URL=postgres://user:password@host:5432/dbname
 
-# LLM (solo servidor; límite de gasto configurado en la consola del proveedor)
+# LLM (solo servidor): llave de la API de Anthropic, redacta el diagnóstico con Claude Haiku 5.5.
+# Límite de gasto mensual configurado en la consola antes de crear la llave.
+# Sin llave, el diagnóstico usa el texto fijo de cada regla.
 LLM_API_KEY=XXXXXXXXXXXXXXXX
 
 # Marca las sesiones del autor para excluirlas de /metrics
@@ -446,9 +444,9 @@ chmod +x .git/hooks/pre-commit
 
 ---
 
-## Primera sesión
+## Primera sesión (histórico: ya ejecutada)
 
-Cuatro pasos del día 1, en este orden. El objetivo es terminar el día con una URL viva, no con código.
+Se conserva como registro de cómo se arrancó el proyecto. Cuatro pasos del día 1, en este orden. El objetivo es terminar el día con una URL viva, no con código.
 
 ```bash
 # 1. Crear el proyecto
@@ -475,7 +473,7 @@ npx vercel          # vincular el proyecto y deployar
 npx vercel --prod   # deploy a producción; luego conectar el dominio en el panel de Vercel
 ```
 
-Después de esto: crear la cuenta en el Dashboard de Fintoc, copiar las llaves `sk_test_` y `pk_test_` a `.env.local` y a las variables de entorno de Vercel, y pasar a los días 3–5 de la semana 1.
+Después de esto: crear la cuenta en el Dashboard de Fintoc, copiar las llaves `sk_test_` y `pk_test_` a `.env.local` y a las variables de entorno de Vercel, y construir el flujo completo contra el sandbox.
 
 ### Checklist del día 1 (antes del primer `git push`)
 
