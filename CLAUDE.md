@@ -8,7 +8,7 @@ Archivo de instrucciones para Claude Code. Se lee al inicio de cada sesión. Con
 
 ## 1. Propósito y para quién es
 
-Activation Lab es una URL pública donde cualquier persona completa el flujo real de un producto de pagos por transferencia (Fintoc, en modo test) desde "quiero cobrar" hasta el webhook de pago confirmado, mientras el sistema mide cada paso del funnel y diagnostica solo por qué un intento no llegó a término. Es un proyecto personal, construido y lanzado a producción en dos días (https://testb2bfintech.app) con Claude Code como copiloto. El objetivo es llevar software de local a producción con ayuda de IA, no exponerlo. El proyecto cubre el tramo técnico del onboarding de un comercio self-serve (desde que tiene llaves de test hasta su primer pago de prueba con webhook verificado); no cubre el registro ni la verificación del negocio, que viven dentro de Fintoc.
+Activation Lab es una URL pública donde cualquier persona completa el flujo real de un producto de pagos por transferencia (Fintoc, en modo test) desde "quiero cobrar" hasta el webhook de pago confirmado, mientras el sistema mide cada paso del funnel y diagnostica solo por qué un intento no llegó a término. Es un proyecto personal, construido y lanzado a producción en dos días (https://testb2bfintech.app) con Claude Code como copiloto. El objetivo es llevar software de local a producción con ayuda de IA. El proyecto cubre el tramo técnico del onboarding de un comercio self-serve (desde que tiene llaves de test hasta su primer pago de prueba con webhook verificado); no cubre el registro ni la verificación del negocio, que viven dentro de Fintoc.
 
 ---
 
