@@ -78,6 +78,8 @@ Activation Lab es una URL pública donde cualquier persona completa el flujo rea
 
 ### Páginas
 
+La interfaz pública se presenta como una tienda ficticia ("Tienda Aurora": un producto de 1.000 CLP, resumen de compra, botón de pago por transferencia, seguimiento de pedido). Es solo la capa visual; el nombre del proyecto sigue siendo Activation Lab. Paleta propia crema/carbón/terracota, tipografía Fraunces para títulos: por diseño no debe parecerse a Fintoc ni a ningún proveedor.
+
 ```
 /            inicio: pregunta "¿cómo vendes hoy?" y botón para crear sesión
 /s/[id]      sesión: widget + línea de tiempo en vivo + diagnóstico si aplica

@@ -4,19 +4,19 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const LINKS = [
-  { href: "/", label: "Probar el flujo" },
-  { href: "/casos", label: "Casos a probar" },
+  { href: "/", label: "Tienda" },
+  { href: "/casos", label: "Cuentas de prueba" },
   { href: "/metrics", label: "Métricas" },
 ];
 
 export default function Nav() {
   const pathname = usePathname();
   return (
-    <nav className="sticky top-0 z-10 border-b border-line bg-background/85 backdrop-blur">
-      <div className="mx-auto flex w-full max-w-4xl items-center gap-1 px-4 py-2.5 sm:px-6">
-        <Link href="/" className="mr-auto flex items-center gap-2 font-semibold" title="Nueva sesión limpia">
-          <span className="grid h-7 w-7 place-items-center rounded-md bg-accent text-xs font-bold text-accent-ink">AL</span>
-          <span className="hidden sm:inline">Activation Lab</span>
+    <nav className="sticky top-0 z-10 border-b border-line bg-background/90 backdrop-blur">
+      <div className="mx-auto flex w-full max-w-5xl items-center gap-1 px-4 py-3 sm:px-6">
+        <Link href="/" className="mr-auto flex items-center gap-2.5" title="Volver a la tienda">
+          <span className="grid h-8 w-8 place-items-center rounded-full bg-accent font-display text-base font-semibold text-accent-ink">A</span>
+          <span className="font-display text-lg font-medium tracking-tight">Tienda Aurora</span>
         </Link>
         {LINKS.map((l) => {
           const active = l.href === "/" ? pathname === "/" || pathname.startsWith("/s/") : pathname.startsWith(l.href);

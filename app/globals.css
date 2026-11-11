@@ -1,13 +1,16 @@
 @import "tailwindcss";
 
+/* Paleta propia de "Tienda Aurora": crema, carbón y terracota.
+   Nada de azules, verdes ni morados (no debe parecerse a ningún proveedor). */
 :root {
-  --background: #f8f7f4;
-  --surface: #ffffff;
-  --foreground: #1c1917;
-  --muted: #78716c;
-  --line: #e7e5e4;
-  --accent: #4f46e5;
-  --accent-ink: #ffffff;
+  --background: #faf6f0;
+  --surface: #fffdf9;
+  --foreground: #2a211b;
+  --muted: #7d6e63;
+  --line: #e9dfd3;
+  --accent: #b7410e;
+  --accent-ink: #fff8f2;
+  --accent-soft: #fbe9dd;
 }
 
 @theme inline {
@@ -18,19 +21,22 @@
   --color-line: var(--line);
   --color-accent: var(--accent);
   --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-fraunces);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0c0a09;
-    --surface: #1c1917;
-    --foreground: #f5f5f4;
-    --muted: #a8a29e;
-    --line: #292524;
-    --accent: #818cf8;
-    --accent-ink: #0c0a09;
+    --background: #171310;
+    --surface: #211b17;
+    --foreground: #f3ece4;
+    --muted: #a79889;
+    --line: #342b25;
+    --accent: #e3703a;
+    --accent-ink: #1b120c;
+    --accent-soft: #3a241a;
   }
 }
 
@@ -38,4 +44,8 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), system-ui, sans-serif;
+}
+
+.font-display {
+  font-family: var(--font-fraunces), Georgia, serif;
 }

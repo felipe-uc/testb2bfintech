@@ -53,8 +53,8 @@ const secs = (s: number | null) =>
 export default function MetricsPage() {
   return (
     <Page wide>
-      <PageHeader eyebrow="Activation Lab" title="Funnel de activación">
-        <p>Solo agregados. Entorno de prueba, sin dinero real.</p>
+      <PageHeader eyebrow="Detrás de la tienda" title="Funnel de activación">
+        <p>Solo agregados de todos los pedidos de prueba. Sin dinero real.</p>
       </PageHeader>
       <Suspense fallback={<p className="text-muted">Cargando…</p>}>
         <Content />
@@ -76,7 +76,7 @@ async function Content() {
               key={s.label}
               className={`flex min-h-24 flex-col rounded-lg border p-2 text-xs leading-snug break-words ${
                 s.instrumented
-                  ? "border-accent bg-indigo-50 dark:bg-indigo-950"
+                  ? "border-accent bg-accent-soft"
                   : "border-line text-muted"
               }`}
             >

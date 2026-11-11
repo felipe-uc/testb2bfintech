@@ -4,7 +4,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { loadFintocScript, tokenKey, type FintocWidget } from "@/lib/widget";
-import { Badge, buttonPrimary, Card, CardTitle, Page, PageHeader } from "../../ui";
+import { Badge, buttonPrimary, Card, CardTitle, clp, LinkButton, Page, PageHeader, SummaryRow } from "../../ui";
 
 interface SessionView {
   id: string;
@@ -36,14 +36,14 @@ const STEP_LABELS: Record<string, string> = {
 };
 
 const STATUS_LABELS: Record<string, string> = {
-  created: "Esperando pago",
+  created: "Pedido pendiente de pago",
   in_progress: "Pago en curso",
-  pending: "Pago pendiente de confirmación",
-  paid: "Pago confirmado",
-  finished: "Checkout finalizado",
+  pending: "Pago en verificación",
+  paid: "¡Pago confirmado!",
+  finished: "Pedido finalizado",
   failed: "Pago fallido",
   rejected: "Pago rechazado",
-  expired: "Sesión expirada",
+  expired: "Pedido vencido",
 };
 
 const STATUS_TONE: Record<string, "neutral" | "ok" | "warn" | "bad" | "accent"> = {
@@ -141,7 +141,7 @@ export default function SessionClient({ id }: { id: string }) {
   }
 
   if (notFound) {
-    return <Page><PageHeader title="Sesión no encontrada">Revisa el enlace o crea una sesión nueva desde el inicio.</PageHeader></Page>;
+    return <Page><PageHeader title="Pedido no encontrado">Revisa el enlace o inicia una compra nueva desde la tienda.</PageHeader></Page>;
   }
   if (!session) {
     return <Page><p className="text-muted">Cargando…</p></Page>;
@@ -162,47 +162,61 @@ export default function SessionClient({ id }: { id: string }) {
     })),
   ].sort((a, b) => a.at.localeCompare(b.at));
 
+  const orderNo = session.id.slice(0, 8).toUpperCase();
+
   return (
-    <Page>
-      <PageHeader eyebrow="Sesión de prueba" title={STATUS_LABELS[statusKey] ?? statusKey}>
+    <Page wide>
+      <PageHeader eyebrow={`Pedido #${orderNo}`} title={STATUS_LABELS[statusKey] ?? statusKey}>
         <div className="flex flex-wrap items-center gap-2">
           <Badge tone={STATUS_TONE[statusKey] ?? "neutral"}>{statusKey}</Badge>
-          <span>{session.amount.toLocaleString("es-CL")} CLP de prueba</span>
-          <span>·</span>
-          <span>expira {fmt(session.expires_at)}</span>
+          <span>{expired ? "venció" : "vence"} a las {fmt(session.expires_at)}</span>
         </div>
       </PageHeader>
 
-      {canPay && (
-        <Card>
-          <CardTitle>Paso siguiente</CardTitle>
-          <p className="mb-3 text-sm text-muted">
-            Se abrirá el widget del proveedor. Elige cualquier banco y usa las credenciales de la pestaña “Casos a probar”.
-          </p>
-          <button type="button" onClick={pay} className={`${buttonPrimary} w-full py-3`}>
-            Pagar con banco de prueba
-          </button>
-          {widgetError && <p className="mt-2 text-sm text-red-600">{widgetError}</p>}
-        </Card>
-      )}
-      {!hasToken && !terminal && !expired && (
-        <Card className="border-amber-300 bg-amber-50 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-200">
-          Esta sesión se creó en otro navegador. Para pagar, crea una nueva desde el inicio.
-        </Card>
-      )}
+      <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
+        <div className="flex flex-col gap-6">
+          <Card>
+            <CardTitle>Resumen del pedido</CardTitle>
+            <SummaryRow label="Taza de cerámica Aurora × 1" value={clp(session.amount)} />
+            <SummaryRow label="Envío" value="Gratis" />
+            <SummaryRow label="Total" value={`${clp(session.amount)} CLP`} strong />
+            {canPay && (
+              <>
+                <p className="mt-4 mb-3 text-sm text-muted">
+                  Se abrirá la ventana del banco. Elige cualquier banco y usa un usuario y cuenta de la pestaña “Cuentas de prueba”.
+                </p>
+                <button type="button" onClick={pay} className={`${buttonPrimary} w-full`}>
+                  Pagar con transferencia bancaria
+                </button>
+                {widgetError && <p className="mt-2 text-sm text-rose-700">{widgetError}</p>}
+              </>
+            )}
+            {!hasToken && !terminal && !expired && (
+              <p className="mt-4 rounded-xl border border-line bg-background p-3 text-sm text-muted">
+                Este pedido se inició en otro navegador. Para pagar, inicia una compra nueva desde la tienda.
+              </p>
+            )}
+            {(terminal || expired) && (
+              <div className="mt-4">
+                <LinkButton href="/" secondary>Hacer otra compra</LinkButton>
+              </div>
+            )}
+          </Card>
+        </div>
 
+        <div className="flex flex-col gap-6">
       <Card>
-        <CardTitle hint={pollingStopped ? "actualización detenida" : "se actualiza cada 4 s"}>Línea de tiempo</CardTitle>
+        <CardTitle hint={pollingStopped ? "actualización detenida" : "se actualiza cada 4 s"}>Seguimiento del pago</CardTitle>
         <ol className="relative ml-2 flex flex-col gap-3 border-l border-line pl-5">
           {events.map((e, i) => (
             <li key={i} className="relative text-sm">
               <span
                 className={`absolute -left-[26px] top-1 h-3 w-3 rounded-full border-2 border-surface ${
-                  e.ok ? (e.kind === "webhook" ? "bg-accent" : "bg-emerald-500") : "bg-red-500"
+                  e.ok ? (e.kind === "webhook" ? "bg-accent" : "bg-lime-600") : "bg-rose-600"
                 }`}
               />
               <span className="mr-2 font-mono text-xs text-muted">{fmt(e.at)}</span>
-              <span className={e.ok ? "" : "text-red-600"}>{e.label}</span>
+              <span className={e.ok ? "" : "text-rose-700"}>{e.label}</span>
             </li>
           ))}
         </ol>
@@ -212,8 +226,8 @@ export default function SessionClient({ id }: { id: string }) {
       </Card>
 
       {session.diagnostics.length > 0 && (
-        <Card className="border-l-4 border-l-accent">
-          <CardTitle hint="motor de reglas">Diagnóstico</CardTitle>
+        <Card className="border-accent/40 bg-accent-soft/40">
+          <CardTitle hint="motor de reglas">¿Qué pasó con este pago?</CardTitle>
           {session.diagnostics.map((d, i) => (
             <div key={i} className="flex flex-col gap-1 text-sm">
               <div className="flex items-center gap-2">
@@ -226,6 +240,8 @@ export default function SessionClient({ id }: { id: string }) {
           ))}
         </Card>
       )}
+        </div>
+      </div>
     </Page>
   );
 }

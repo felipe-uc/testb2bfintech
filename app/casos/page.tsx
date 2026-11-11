@@ -27,10 +27,10 @@ const ACCOUNTS = [
 export default function CasesPage() {
   return (
     <Page wide>
-      <PageHeader eyebrow="Banco de prueba" title="Casos a probar">
+      <PageHeader eyebrow="Banco de prueba" title="Cuentas de prueba">
         <p>
-          El sandbox decide el resultado según el usuario y la cuenta de origen que elijas. Elige cualquier banco en
-          el widget. La clave de estos usuarios está en la{" "}
+          El banco de prueba decide el resultado según el usuario y la cuenta de origen que elijas. Elige cualquier banco en
+          la ventana de pago. La clave de estos usuarios está en la{" "}
           <a
             href="https://docs.fintoc.com/docs/payment-initiation-test-your-integration"
             target="_blank"
@@ -91,7 +91,7 @@ export default function CasesPage() {
       </p>
 
       <div>
-        <LinkButton href="/">Probar un escenario</LinkButton>
+        <LinkButton href="/">Ir a la tienda y pagar</LinkButton>
       </div>
     </Page>
   );
