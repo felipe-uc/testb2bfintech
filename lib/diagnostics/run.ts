@@ -1,6 +1,6 @@
 /**
  * Puente entre la base y el motor de reglas. Garantiza "un diagnóstico por
- * sesión, máximo" (CLAUDE.md 12.2): si ya existe, no evalúa nada.
+ * sesión, máximo" (CLAUDE.md 11.2): si ya existe, no evalúa nada.
  *
  * La fila se inserta primero con el texto fijo de la regla y solo quien la
  * insertó llama al LLM: así hay como máximo una llamada por sesión, y si el

@@ -21,7 +21,7 @@ interface SessionView {
 }
 
 const POLL_MS = 4000;
-const POLL_LIMIT_MS = 15 * 60 * 1000; // CLAUDE.md 12.2
+const POLL_LIMIT_MS = 15 * 60 * 1000; // CLAUDE.md 11.2
 
 const STEP_LABELS: Record<string, string> = {
   session_created: "Sesión de cobro creada",

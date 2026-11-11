@@ -1,6 +1,6 @@
 /**
  * Conexión a Postgres (Supabase, pooler en modo transacción) y consultas.
- * Solo se importa desde route handlers y server components (CLAUDE.md 12.1).
+ * Solo se importa desde route handlers y server components (CLAUDE.md 11.1).
  */
 import postgres from "postgres";
 
@@ -153,7 +153,7 @@ export async function insertPaymentEvent(input: {
 export async function listPaymentEvents(
   sessionId: string,
 ): Promise<PaymentEventRow[]> {
-  // Sin payload_raw: nunca sale de la base hacia una respuesta (CLAUDE.md 12.3).
+  // Sin payload_raw: nunca sale de la base hacia una respuesta (CLAUDE.md 11.3).
   return db()<PaymentEventRow[]>`
     select id, session_id, received_at, event_type, fintoc_event_id, signature_valid
     from payment_events where session_id = ${sessionId}

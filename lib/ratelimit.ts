@@ -1,5 +1,5 @@
 /**
- * Límite por IP en memoria (CLAUDE.md 12.2 y 12.3): la IP nunca se guarda,
+ * Límite por IP en memoria (CLAUDE.md 11.2 y 12.3): la IP nunca se guarda,
  * solo un hash con sal que vive en el proceso. En Vercel cada instancia tiene
  * su propia memoria, así que el límite es aproximado; suficiente para frenar
  * abuso en un proyecto personal sin agregar dependencias.
@@ -39,7 +39,7 @@ export function allow(
 
 export const MAX_BODY_BYTES = 64 * 1024;
 
-/** Lee el body como texto rechazando más de 64 KB (CLAUDE.md 12.2). */
+/** Lee el body como texto rechazando más de 64 KB (CLAUDE.md 11.2). */
 export async function readBodyLimited(req: Request): Promise<string | null> {
   const declared = Number(req.headers.get("content-length") ?? 0);
   if (declared > MAX_BODY_BYTES) return null;

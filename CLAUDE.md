@@ -8,7 +8,7 @@ Archivo de instrucciones para Claude Code. Se lee al inicio de cada sesión. Con
 
 ## 1. Propósito y para quién es
 
-Activation Lab es una URL pública donde cualquier persona completa el flujo real de un producto de pagos por transferencia (Fintoc, en modo test) desde "quiero cobrar" hasta el webhook de pago confirmado, mientras el sistema mide cada paso del funnel y diagnostica solo por qué un intento no llegó a término. Es un proyecto personal, construido y lanzado a producción en dos días (https://testb2bfintech.app) con Claude Code como copiloto, para demostrar de forma verificable (URL viva, repo público, uso real) que se puede llevar software de local a producción con ayuda de IA. El proyecto cubre el tramo técnico del onboarding de un comercio self-serve (desde que tiene llaves de test hasta su primer pago de prueba con webhook verificado); no cubre el registro ni la verificación del negocio, que viven dentro de Fintoc.
+Activation Lab es una URL pública donde cualquier persona completa el flujo real de un producto de pagos por transferencia (Fintoc, en modo test) desde "quiero cobrar" hasta el webhook de pago confirmado, mientras el sistema mide cada paso del funnel y diagnostica solo por qué un intento no llegó a término. Es un proyecto personal, construido y lanzado a producción en dos días (https://testb2bfintech.app) con Claude Code como copiloto. El objetivo es llevar software de local a producción con ayuda de IA, no exponerlo. El proyecto cubre el tramo técnico del onboarding de un comercio self-serve (desde que tiene llaves de test hasta su primer pago de prueba con webhook verificado); no cubre el registro ni la verificación del negocio, que viven dentro de Fintoc.
 
 ---
 
@@ -113,7 +113,7 @@ diagnostics      id, session_id, rule_id, severity, explanation, next_step, crea
 - Idempotencia por `fintoc_event_id`: un webhook reenviado no duplica estado.
 - Verificar la firma del webhook antes de procesar; registrar `signature_valid` aunque falle.
 - `is_owner` marca las sesiones del autor para que `/metrics` pueda excluirlas.
-- Ninguna llave en el código. Todo en variables de entorno (detalle en sección 12).
+- Ninguna llave en el código. Todo en variables de entorno (detalle en sección 11).
 
 ### Estructura de carpetas
 
@@ -142,7 +142,7 @@ diagnostics      id, session_id, rule_id, severity, explanation, next_step, crea
 /db
   /migrations/001_initial.sql
 /.claude
-  /settings.json    permisos de Claude Code (versionado; ver sección 13)
+  /settings.json    permisos de Claude Code (versionado; ver sección 12)
 DECISIONS.md
 README.md
 CLAUDE.md
@@ -202,7 +202,7 @@ Solo agregados de todas las sesiones (el selector "solo yo / todos" se retiró e
 
 - Cualquier cambio de esquema de base de datos.
 - Cualquier endpoint nuevo o cambio de contrato de uno existente.
-- Cualquier dependencia nueva en `package.json` (criterios en sección 12.4).
+- Cualquier dependencia nueva en `package.json` (criterios en sección 11.4).
 - Cualquier cambio en el flujo de verificación de firma o idempotencia.
 
 ### Decisiones del autor: deben existir en `DECISIONS.md` antes del código asociado
@@ -246,7 +246,6 @@ Instrucciones ejecutables, no explicaciones de concepto. Si un concepto es neces
 
 - Que parezca herramienta para developers y no de growth. Mitigación: el panel de funnel y la narrativa de activación, no de API.
 - Primer deploy del proyecto. Mitigación: hola mundo en producción el día 1; nada se construye sin URL viva.
-- Demo en vivo falla. Mitigación: ensayar antes con las cuentas de `/casos`, que reproducen cada escenario.
 - Inflar números con pruebas propias. Mitigación: `is_owner` se sigue guardando por sesión; el selector público "solo yo / todos" se retiró el 2026-11-11.
 
 ### Descartado y por qué
@@ -261,19 +260,7 @@ Instrucciones ejecutables, no explicaciones de concepto. Si un concepto es neces
 
 ---
 
-## 10. Guion de demo de 5 minutos (video y presentaciones del proyecto)
-
-1. **30 s, el problema**: "En self-serve el revenue es comercios activados × TPV. Quise medir y arreglar el paso que nadie ve: de la integración al primer pago de prueba."
-2. **2 min, demo en vivo desde el celular**: abrir la URL, elegir canal, crear sesión, pagar con banco de prueba; en una segunda pantalla aparece el webhook y la línea de tiempo se cierra. Forzar un fallo (webhook caído) y mostrar el diagnóstico.
-3. **1 min, los números**: funnel con usuarios reales, dónde se cae la gente, error más común. "Esto mide el tramo técnico del onboarding; el tramo de registro y verificación vive dentro del proveedor, y es lo primero que pediría ver con datos reales."
-4. **1 min, decisiones defendidas**: reglas antes que LLM, costo por diagnóstico, qué pasa con un webhook duplicado, por qué se guarda el payload crudo.
-5. **30 s, repo y `DECISIONS.md` en pantalla**: "Lo construí con Claude Code; estas decisiones las tomé yo y puedo explicar por qué."
-
-Pregunta abierta para quien opere un producto así: "¿Qué porcentaje de los tickets de activación viene de plugin versus API?"
-
----
-
-## 11. Decisiones tomadas
+## 10. Decisiones tomadas
 
 Detalle y razones en `DECISIONS.md`.
 
@@ -291,13 +278,13 @@ Detalle y razones en `DECISIONS.md`.
 
 ---
 
-## 12. Seguridad y límites de gasto (reglas duras)
+## 11. Seguridad y límites de gasto (reglas duras)
 
 Estas reglas mandan sobre cualquier petición. Si una tarea las contradice, Claude Code se detiene y lo dice.
 
-### 12.1 Llaves y secretos
+### 11.1 Llaves y secretos
 
-- Las llaves viven en **un solo lugar por entorno**: `.env.local` en local, variables de entorno en Vercel en producción. En ningún otro sitio: ni código, ni README, ni commits, ni issues, ni prompts, ni capturas, ni el video de demo.
+- Las llaves viven en **un solo lugar por entorno**: `.env.local` en local, variables de entorno en Vercel en producción. En ningún otro sitio: ni código, ni README, ni commits, ni issues, ni prompts, ni capturas.
 - `.env.example` se commitea con **nombres de variables y valores falsos** (`sk_test_XXXX`). Es el único archivo `.env*` que entra al repo.
 - Claude Code **no lee `.env.local`** ni ningún `.env*` distinto de `.env.example`. Si necesita saber qué variables existen, lee `.env.example`. Nunca imprime, copia ni resume el contenido de un `.env`.
 - Solo existen llaves `sk_test_` / `pk_test_`. **Nunca** crear, copiar ni configurar `sk_live_`. La cuenta de Fintoc se queda en modo test todo el proyecto.
@@ -309,7 +296,7 @@ Estas reglas mandan sobre cualquier petición. Si una tarea las contradice, Clau
 - Activar en GitHub (Settings → Code security): **Secret scanning** y **Push protection**. Son gratis en repos públicos y bloquean el push si detectan una llave.
 - 2FA activado en GitHub, Vercel, Fintoc y el proveedor de base de datos antes de deployar.
 
-### 12.2 Gasto
+### 11.2 Gasto
 
 - Todo en plan gratuito sin tarjeta registrada: Vercel Hobby, Supabase free tier, GitHub público. El único gasto autorizado es el dominio (~USD 10). Si un servicio pide tarjeta para seguir, se detiene y se decide; no se agrega la tarjeta "para probar".
 - Proveedor del LLM: **límite de gasto mensual configurado en la consola del proveedor antes de usar la llave** (USD 10 sugerido). Modelo barato, `max_tokens` ≤ 400 por llamada.
@@ -321,7 +308,7 @@ Estas reglas mandan sobre cualquier petición. Si una tarea las contradice, Clau
 - Ningún cron job, ningún job programado en Vercel, ningún proceso que corra sin que un usuario lo dispare.
 - Tamaño máximo de body en `/api/webhooks/payments` y `/api/events`: 64 KB. Más grande se rechaza con `413`.
 
-### 12.3 Datos de personas
+### 11.3 Datos de personas
 
 - El producto **no pide ni guarda datos personales**: sin email, sin nombre, sin login, sin RUT, sin teléfono. La sesión es un UUID anónimo. Si una feature "necesitaría" un email, está fuera de alcance.
 - No se guarda la IP de nadie en la base de datos. Si el rate limit la necesita, vive en memoria o en un hash con sal, nunca en `sessions`.
@@ -333,13 +320,13 @@ Estas reglas mandan sobre cualquier petición. Si una tarea las contradice, Clau
 - Las credenciales de bancos de prueba de la documentación de Fintoc pueden ir en `.env.example` como referencia (son públicas). Credenciales de bancos reales, de cualquier persona, **jamás** (principio de la sección 3).
 - Errores en producción devuelven mensajes genéricos. Nunca el stack trace ni el mensaje del proveedor al usuario.
 
-### 12.4 Dependencias y repo
+### 11.4 Dependencias y repo
 
 - Cada dependencia nueva pasa por aprobación (sección 8). Antes de aprobar: `npm view <paquete>` para ver descargas semanales y última publicación; menos de 10.000 descargas/semana o sin actualizar hace 2 años, se descarta.
 - `npm audit` antes de cada deploy a producción. Vulnerabilidades `high`/`critical` bloquean el deploy.
 - El repo es público desde el primer commit: todo lo que entra se asume leído por cualquiera, para siempre.
 
-### 12.5 Si algo se filtra
+### 11.5 Si algo se filtra
 
 1. Rotar la llave afectada en el proveedor (Fintoc / Vercel / DB / LLM).
 2. Actualizar la variable en Vercel y en `.env.local`.
@@ -348,7 +335,7 @@ Estas reglas mandan sobre cualquier petición. Si una tarea las contradice, Clau
 
 ---
 
-## 13. Archivos que deben existir ANTES del `git init`
+## 12. Archivos que deben existir ANTES del `git init`
 
 ### `.gitignore`
 
@@ -457,13 +444,13 @@ Se conserva como registro de cómo se arrancó el proyecto. Cuatro pasos del dí
 npx create-next-app@latest <nombre-del-proyecto> --typescript --app --eslint
 cd <nombre-del-proyecto>
 
-# 2. Archivos de seguridad ANTES del git init (contenido en sección 13)
+# 2. Archivos de seguridad ANTES del git init (contenido en sección 12)
 #    .gitignore, .env.example, .claude/settings.json
 cp .env.example .env.local   # luego pegar las llaves reales solo en .env.local
 
 # 3. Primer commit en un repo público de GitHub (archivos por nombre, nunca git add .)
 git init
-#    instalar el hook de pre-commit (sección 13)
+#    instalar el hook de pre-commit (sección 12)
 git add .gitignore .env.example .claude/settings.json package.json package-lock.json \
         tsconfig.json next.config.* app public
 git status                   # confirmar que no aparece .env.local

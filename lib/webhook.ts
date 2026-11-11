@@ -50,7 +50,7 @@ export interface WebhookStore {
 export interface WebhookResult {
   status: number;
   body: Record<string, unknown>;
-  /** Para el log: solo estos campos, nunca el payload (CLAUDE.md 12.3). */
+  /** Para el log: solo estos campos, nunca el payload (CLAUDE.md 11.3). */
   log?: { session_id: string | null; event_type: string; signature_valid: boolean; duplicate: boolean };
 }
 

@@ -44,7 +44,7 @@ export async function POST(req: Request) {
     store,
   });
 
-  // Logs: solo session_id, event_type y signature_valid (CLAUDE.md 12.3).
+  // Logs: solo session_id, event_type y signature_valid (CLAUDE.md 11.3).
   if (result.log) console.log("webhook", result.log);
 
   return NextResponse.json(result.body, { status: result.status });

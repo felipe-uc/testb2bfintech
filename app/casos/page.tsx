@@ -3,7 +3,7 @@ import { Badge, Card, CardTitle, LinkButton, Page, PageHeader } from "../ui";
 /**
  * Credenciales públicas del sandbox de Fintoc (docs.fintoc.com, "Test your
  * integration"). Son datos de prueba publicados por el proveedor, no de
- * personas (CLAUDE.md 12.3).
+ * personas (CLAUDE.md 11.3).
  */
 const USERS = [
   { rut: "41614850-3", result: "Flujo normal (login y autorización)" },

@@ -1,6 +1,6 @@
 /**
  * `is_owner` se marca con una cookie secreta que solo el autor tiene
- * (CLAUDE.md 12.3). Valor en OWNER_COOKIE_SECRET; nunca un parámetro visible.
+ * (CLAUDE.md 11.3). Valor en OWNER_COOKIE_SECRET; nunca un parámetro visible.
  */
 import { timingSafeEqual } from "node:crypto";
 

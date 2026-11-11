@@ -10,7 +10,7 @@ import {
 const reasonOf = (check: SignatureCheck) =>
   check.valid ? "valid" : check.reason;
 
-// Fixture inventado a mano; no es un payload real (CLAUDE.md 12.3).
+// Fixture inventado a mano; no es un payload real (CLAUDE.md 11.3).
 const SECRET = "whsec_fixture_not_a_real_secret";
 const NOW = 1_700_000_000;
 const BODY = JSON.stringify({

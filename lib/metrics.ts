@@ -1,6 +1,6 @@
 /**
  * Consultas de /metrics (DECISIONS.md, 2026-10-28 "/metrics"). Solo agregados:
- * nunca sesiones individuales, payloads ni IDs de Fintoc (CLAUDE.md 12.3).
+ * nunca sesiones individuales, payloads ni IDs de Fintoc (CLAUDE.md 11.3).
  */
 import { db, type Channel } from "./db";
 

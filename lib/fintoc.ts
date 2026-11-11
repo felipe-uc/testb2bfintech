@@ -9,7 +9,7 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 
 const API_BASE_URL = "https://api.fintoc.com";
 
-/** Monto fijo en modo test, en CLP sin decimales (CLAUDE.md 12.2). */
+/** Monto fijo en modo test, en CLP sin decimales (CLAUDE.md 11.2). */
 export const SESSION_AMOUNT_CLP = 1000;
 export const SESSION_CURRENCY = "CLP";
 /** Expiración de la checkout session (DECISIONS.md, 2026-10-28). */
@@ -55,7 +55,7 @@ function secretKey(): string {
   const key = process.env.FINTOC_SECRET_KEY;
   if (!key) throw new Error("FINTOC_SECRET_KEY is not set");
   if (!key.startsWith("sk_test_")) {
-    // Regla dura: el proyecto vive en modo test (CLAUDE.md 12.1).
+    // Regla dura: el proyecto vive en modo test (CLAUDE.md 11.1).
     throw new Error("FINTOC_SECRET_KEY must be a test key (sk_test_)");
   }
   return key;
@@ -71,7 +71,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
     },
   });
   if (!res.ok) {
-    // No se reenvía el cuerpo del error al usuario (CLAUDE.md 12.3).
+    // No se reenvía el cuerpo del error al usuario (CLAUDE.md 11.3).
     throw new FintocApiError(res.status, `Fintoc API ${res.status} on ${path}`);
   }
   return (await res.json()) as T;

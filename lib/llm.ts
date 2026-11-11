@@ -2,7 +2,7 @@
  * Redacción del diagnóstico con LLM (DECISIONS.md, 2026-11-11).
  *
  * Las reglas deciden; el LLM solo redacta. Recibe únicamente rule_id,
- * severidad y los facts de la regla (CLAUDE.md 12.2): nunca el payload del
+ * severidad y los facts de la regla (CLAUDE.md 11.2): nunca el payload del
  * webhook, IDs ni llaves. Cualquier fallo devuelve null y el llamador se
  * queda con el texto fijo de la regla. Este módulo nunca lanza.
  */

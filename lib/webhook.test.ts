@@ -4,7 +4,7 @@ import { beforeEach, describe, it } from "node:test";
 import { signWebhookPayload } from "./fintoc.ts";
 import { processWebhook, type WebhookStore } from "./webhook.ts";
 
-// Fixtures inventados a mano; no son payloads reales (CLAUDE.md 12.3).
+// Fixtures inventados a mano; no son payloads reales (CLAUDE.md 11.3).
 const SECRET = "whsec_fixture_not_a_real_secret";
 const NOW = 1_700_000_000;
 const FINTOC_SESSION = "cs_fixture_0001";

@@ -57,7 +57,7 @@ export async function POST(req: Request) {
       { status: 201 },
     );
   } catch (err) {
-    // Mensaje genérico al usuario; detalle solo en logs (CLAUDE.md 12.3).
+    // Mensaje genérico al usuario; detalle solo en logs (CLAUDE.md 11.3).
     const status = err instanceof FintocApiError ? err.status : "db";
     console.error("POST /api/sessions failed", { status });
     return NextResponse.json({ error: "session_creation_failed" }, { status: 502 });

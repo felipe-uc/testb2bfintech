@@ -47,7 +47,7 @@ export async function fetchBankRejectionReason<E extends FunnelEvent>(
     console.warn("bank_lookup_failed", { session_id: sessionId, reason: err instanceof Error ? err.message : "unknown" });
     return { looked: false };
   }
-  // Log mínimo (CLAUDE.md 12.3): estados y razón, sin payload ni IDs de Fintoc.
+  // Log mínimo (CLAUDE.md 11.3): estados y razón, sin payload ni IDs de Fintoc.
   console.log("bank_lookup", { session_id: sessionId, intent_status: intentStatus, error_reason: reason });
   await insert({ sessionId, step: "bank_lookup_done", metadata: { intent_status: intentStatus } });
   if (reason !== null) {
