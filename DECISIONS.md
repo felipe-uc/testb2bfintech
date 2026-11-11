@@ -117,3 +117,13 @@ Decisiones de producto y arquitectura tomadas por el autor del proyecto, escrita
 **Por qué:** probado con la cuenta 5233138811 (sesiones 510a237d y abf076b2): el banco rechaza dentro del widget, el widget no emite `payment_error`, la checkout session no termina y Fintoc no envía `payment_intent.failed`. Para el sistema era indistinguible de un abandono y el diagnóstico salía mal. El `error_reason` solo existe en el objeto de Fintoc.
 
 **Descartado:** esperar al webhook `checkout_session.expired` (llega 15 min después y sin razón del fallo); inferir el rechazo solo desde `back-to-checkout-buttons` (evento no documentado, sin la razón); consultar a Fintoc en cada poll (una consulta por sesión, igual que el LLM).
+
+## 2026-11-11 — Rechazo del banco: diagnóstico inmediato por señal del widget y razón diferida
+
+Reemplaza la entrada anterior del mismo día ("consultar la checkout session").
+
+**Decisión:** la regla `bank_rejected` aplica apenas el widget emite `payment_error` o `back-to-checkout-buttons` después de `payment_in_progress`, sin autorización ni webhook. El diagnóstico sale de inmediato con "El banco rechazó el pago en el widget" y razón "no disponible todavía". La consulta a `GET /v2/checkout_sessions/{id}` se hace una sola vez, solo cuando la sesión ya expiró (por `expires_at` o por el webhook `checkout_session.expired`); si el intento viene `failed` o `rejected`, se guarda `error_reason` en el evento `payment_rejected_in_bank` y se actualiza el texto fijo del diagnóstico con la razón, sin volver a llamar al LLM. La consulta queda registrada como evento `bank_lookup_done` para no repetirla aunque no traiga razón.
+
+**Por qué:** verificado con la sesión c30425d0: tras el rechazo en pantalla Fintoc deja la checkout session y el payment intent en `in_progress` con `error_reason` nulo, y la implementación anterior consultaba en cada poll (30 llamadas en 2 minutos) sin obtener nada. La señal del widget es inmediata y suficiente para decir "el banco rechazó"; la razón solo existe cuando la sesión termina.
+
+**Descartado:** consultar a Fintoc mientras la sesión está viva (no devuelve nada y multiplica llamadas); esperar la expiración para diagnosticar (15 minutos sin respuesta al usuario); inferir la razón desde el nombre del evento del widget (no la trae).
