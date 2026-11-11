@@ -1,5 +1,6 @@
 /**
- * Motor de reglas: evalúa en el orden decidido en DECISIONS.md y devuelve
+ * Motor de reglas: evalúa en el orden decidido en DECISIONS.md (2026-10-28 y
+ * 2026-11-11, `bank_rejected` antes de `abandoned_in_widget`) y devuelve
  * la primera que aplica. Una sesión con pago confirmado y sin regla no
  * genera diagnóstico. La regla 10 (webhook_without_session) no se asocia a
  * una sesión y se cuenta solo en /metrics.
@@ -8,6 +9,7 @@ import { expiredWithoutWidget } from "./01-expired-without-widget.ts";
 import { widgetNeverOpened } from "./02-widget-never-opened.ts";
 import { widgetLoadError } from "./03-widget-load-error.ts";
 import { abandonedInWidget } from "./04-abandoned-in-widget.ts";
+import { bankRejected } from "./04-bank-rejected.ts";
 import { widgetReopened } from "./05-widget-reopened.ts";
 import { authorizedWithoutWebhook } from "./06-authorized-without-webhook.ts";
 import { webhookInvalidSignature } from "./07-webhook-invalid-signature.ts";
@@ -21,6 +23,7 @@ export const RULES: readonly Rule[] = [
   expiredWithoutWidget,
   widgetNeverOpened,
   widgetLoadError,
+  bankRejected,
   abandonedInWidget,
   widgetReopened,
   authorizedWithoutWebhook,

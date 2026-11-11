@@ -6,7 +6,9 @@
  * insertó llama al LLM: así hay como máximo una llamada por sesión, y si el
  * LLM falla el diagnóstico ya está guardado con el texto fijo.
  */
-import { db, listFunnelEvents, listPaymentEvents, type SessionRow } from "../db";
+import { db, insertFunnelEvent, listFunnelEvents, listPaymentEvents, type SessionRow } from "../db";
+import { getCheckoutSession } from "../fintoc";
+import { fetchBankRejection } from "./bank-rejection.ts";
 import { draftWording } from "../llm";
 import { diagnose, type Diagnosis } from "./index";
 
@@ -27,10 +29,18 @@ export async function ensureDiagnostic(session: SessionRow): Promise<StoredDiagn
   const existing = await readDiagnostics(session.id);
   if (existing.length) return existing;
 
-  const [funnel, webhooks] = await Promise.all([
+  const [storedFunnel, webhooks] = await Promise.all([
     listFunnelEvents(session.id),
     listPaymentEvents(session.id),
   ]);
+  const funnel = await fetchBankRejection({
+    sessionId: session.id,
+    fintocSessionId: session.fintoc_session_id,
+    funnel: storedFunnel,
+    webhookCount: webhooks.length,
+    fetchSession: getCheckoutSession,
+    insert: insertFunnelEvent,
+  });
   const result: Diagnosis | null = diagnose({
     status: session.status,
     createdAt: session.created_at,

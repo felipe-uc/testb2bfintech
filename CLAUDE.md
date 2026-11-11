@@ -41,7 +41,7 @@ Activation Lab es una URL pública donde cualquier persona completa el flujo rea
 
 - Camino API completo contra el sandbox de Fintoc (Payment Initiation): crear sesión de cobro (1.000 CLP de prueba, expira a los 15 min) → abrir widget → autorizar con banco de prueba → webhook recibido con firma verificada → pago confirmado.
 - Página de sesión `/s/[id]` con línea de tiempo en vivo de esos pasos (polling cada 4 s, tope de 15 min).
-- Diagnóstico automático cuando un intento no llega a término: motor de reglas determinístico con 10 reglas (9 se evalúan por sesión; `webhook_without_session` no se asocia a una sesión y solo cuenta en `/metrics`). Las reglas deciden el diagnóstico; un LLM (Claude Haiku 5.5) solo redacta la explicación y el siguiente paso, una vez por sesión. Si el LLM falla o no hay llave, queda el texto fijo de la regla.
+- Diagnóstico automático cuando un intento no llega a término: motor de reglas determinístico con 11 reglas (10 se evalúan por sesión; `webhook_without_session` no se asocia a una sesión y solo cuenta en `/metrics`). Las reglas deciden el diagnóstico; un LLM (Claude Haiku 5.5) solo redacta la explicación y el siguiente paso, una vez por sesión. Si el LLM falla o no hay llave, queda el texto fijo de la regla.
 - Instrumentación de eventos de funnel en cada paso (tabla propia `funnel_events`).
 - Pregunta inicial "¿cómo vendes hoy?" con cuatro opciones (Shopify / WooCommerce o VTEX / API propia / aún no vendo online), guardada como canal de la sesión.
 - `/casos`: usuarios y cuentas del banco de prueba que terminan en éxito, falla o pendiente, para provocar cada diagnóstico. Fuente: documentación pública de Fintoc ("Test your integration").
@@ -74,7 +74,7 @@ Activation Lab es una URL pública donde cualquier persona completa el flujo rea
 - Webhooks en local: túnel con ngrok. En producción: route handler en Vercel.
 - Diagnóstico: reglas en TypeScript puro, una por archivo. Se evalúan al leer la sesión (`GET /api/sessions/[id]`) y se guardan una sola vez en `diagnostics`.
 - Redacción: `lib/llm.ts` llama a la API de Anthropic (Claude Haiku 5.5) con `fetch`, sin SDK. Recibe solo `rule_id`, severidad y los `facts` de la regla; `max_tokens` 400, timeout de 6 s. La respuesta se valida (formato, largo, sin cifras inventadas) y cualquier fallo deja el texto fijo de la regla.
-- Tests: `node --test`, 47 tests (firma de webhook, idempotencia, confirmación de pago, motor de reglas, redacción con LLM).
+- Tests: `node --test`, 52 tests (firma de webhook, idempotencia, confirmación de pago, motor de reglas, redacción con LLM).
 
 ### Páginas
 
@@ -168,6 +168,7 @@ El plan original era de tres semanas (semana 1: llegar vivo a producción; seman
 ### Agregado después del lanzamiento
 
 - 2026-11-11: redacción del diagnóstico con LLM (`lib/llm.ts`).
+- 2026-11-11: regla `bank_rejected`: consulta única a la checkout session de Fintoc cuando el banco rechaza dentro del widget y no hay webhook (`lib/diagnostics/bank-rejection.ts`).
 
 ---
 
@@ -280,7 +281,7 @@ Detalle y razones en `DECISIONS.md`.
 - Postgres: Supabase.
 - Eventos: tabla propia `funnel_events`, sin PostHog.
 - `/metrics`: consultas directas desde Next.js, sin Looker Studio.
-- Reglas de diagnóstico: diez, con su orden y umbrales.
+- Reglas de diagnóstico: diez al lanzar, once desde el 2026-11-11 (`bank_rejected`), con su orden y umbrales.
 - LLM para redactar el diagnóstico: Anthropic, Claude Haiku 5.5; menos de USD 0,0003 por diagnóstico.
 - Qué cuenta como "activado": webhook con firma válida y pago exitoso.
 - Bancos de prueba: usuarios y cuentas publicados en `/casos`; la clave no se muestra, está en la documentación pública del proveedor.

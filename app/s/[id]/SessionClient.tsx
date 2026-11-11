@@ -28,6 +28,7 @@ const STEP_LABELS: Record<string, string> = {
   widget_opened: "Widget abierto",
   widget_closed: "Widget cerrado sin completar",
   widget_error: "Error en el widget",
+  payment_rejected_in_bank: "El banco rechazó el pago",
   authorization_completed: "Autorización completada en el banco",
   webhook_verified: "Webhook recibido y firma verificada",
   payment_confirmed: "Pago confirmado",
@@ -151,7 +152,7 @@ export default function SessionClient({ id }: { id: string }) {
   const statusKey = expired && !terminal ? "expired" : session.status;
 
   const events = [
-    ...session.timeline.funnel.map((e) => ({ at: e.at, label: e.step === "widget_event" ? `Evento del widget: ${e.metadata?.type ?? "?"}` : (STEP_LABELS[e.step] ?? e.step), ok: e.step !== "widget_error" && e.step !== "widget_closed", kind: "funnel" })),
+    ...session.timeline.funnel.map((e) => ({ at: e.at, label: e.step === "widget_event" ? `Evento del widget: ${e.metadata?.type ?? "?"}` : (STEP_LABELS[e.step] ?? e.step), ok: !["widget_error", "widget_closed", "payment_rejected_in_bank"].includes(e.step), kind: "funnel" })),
     ...session.timeline.webhooks.map((w) => ({
       at: w.at,
       label: `Webhook ${w.event_type} · ${w.signature_valid ? "firma válida" : "firma inválida"}`,

@@ -30,6 +30,15 @@ export interface CheckoutSession {
   /** Token para abrir el widget. Expira 10 min después de crearse. */
   session_token: string | null;
   mode: "test" | "live";
+  /** null hasta que el cliente inicia un intento de pago (docs: Checkout session object). */
+  payment_resource?: {
+    payment_intent?: {
+      id?: string;
+      status?: string;
+      /** Razón del fallo; null mientras está en curso o si tuvo éxito. */
+      error_reason?: string | null;
+    } | null;
+  } | null;
 }
 
 export class FintocApiError extends Error {

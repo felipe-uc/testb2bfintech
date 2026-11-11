@@ -19,13 +19,14 @@ function snapshot(partial: Partial<SessionSnapshot> = {}): SessionSnapshot {
 }
 
 describe("diagnose", () => {
-  it("has the ten-minus-one rules in the decided order", () => {
+  it("has the eleven-minus-one rules in the decided order", () => {
     assert.deepEqual(
       RULES.map((r) => r.id),
       [
         "expired_without_widget",
         "widget_never_opened",
         "widget_load_error",
+        "bank_rejected",
         "abandoned_in_widget",
         "widget_reopened",
         "authorized_without_webhook",
@@ -80,6 +81,29 @@ describe("diagnose", () => {
     );
     assert.equal(d?.ruleId, "widget_load_error");
     assert.equal(d?.severity, "alta");
+  });
+
+  it("bank_rejected wins over abandoned_in_widget and carries the error_reason", () => {
+    const funnel = [
+      { step: "session_created", at: T0 },
+      { step: "widget_opened", at: min(1) },
+      { step: "widget_event", at: min(2), metadata: { type: "back-to-checkout-buttons" } },
+      { step: "payment_rejected_in_bank", at: min(2), metadata: { error_reason: "new_contact_amount_limit_reached" } },
+    ];
+    const d = diagnose(snapshot({ funnel, now: min(10) }));
+    assert.equal(d?.ruleId, "bank_rejected");
+    assert.equal(d?.facts.error_reason, "new_contact_amount_limit_reached");
+    assert.match(d?.nextStep ?? "", /contactos nuevos/);
+  });
+
+  it("bank_rejected does not fire once a webhook arrived", () => {
+    const funnel = [
+      { step: "session_created", at: T0 },
+      { step: "widget_opened", at: min(1) },
+      { step: "payment_rejected_in_bank", at: min(2), metadata: { error_reason: "x" } },
+    ];
+    const d = diagnose(snapshot({ status: "failed", funnel, webhooks: [{ eventType: "payment_intent.failed", signatureValid: true, at: min(3) }], now: min(10) }));
+    assert.equal(d?.ruleId, "payment_failed");
   });
 
   it("4 abandoned_in_widget after 3 minutes without authorization", () => {
