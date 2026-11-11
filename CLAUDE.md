@@ -177,10 +177,11 @@ El plan original era de tres semanas (semana 1: llegar vivo a producción; seman
 Solo agregados de todas las sesiones (el selector "solo yo / todos" se retiró el 2026-11-11; `is_owner` se sigue guardando). En este orden:
 
 1. Etapas del onboarding completo de un comercio (registro en el Dashboard → verificación del negocio → habilitación de productos → integración → primer pago de prueba → paso a live → primer pago real), marcando cuáles instrumenta este proyecto: solo integración y primer pago de prueba.
-2. Funnel por paso, en total y por canal: sesión creada → widget abierto → autorización → webhook verificado → pago confirmado, con conversión contra el paso anterior y acumulada.
+2. Funnel por paso, en total y por canal: sesión creada → widget abierto → llegó al banco (`payment_in_progress` del widget, desde el 2026-11-11) → autorización → webhook verificado → pago confirmado, con conversión contra el paso anterior y acumulada.
 3. Mediana y p90 del tiempo entre sesión creada y pago confirmado.
 4. Sesiones expiradas sin abrir el widget.
 5. Diagnósticos por `rule_id`, más webhooks válidos sin sesión asociada (regla 10).
+6. Rechazos del banco (diagnósticos `bank_rejected`): con razón conocida, sin razón todavía y desglose por `error_reason` (desde el 2026-11-11).
 
 ---
 

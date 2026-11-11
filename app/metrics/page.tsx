@@ -17,6 +17,7 @@ const STAGES = [
 const STEP_LABELS: Record<(typeof FUNNEL_STEPS)[number], string> = {
   session_created: "Sesión creada",
   widget_opened: "Widget abierto",
+  reached_bank: "Llegó al banco",
   authorization_completed: "Autorización",
   webhook_verified: "Webhook verificado",
   payment_confirmed: "Pago confirmado",
@@ -138,6 +139,31 @@ async function Content() {
                     <Badge tone={d.severity === "crítica" ? "bad" : d.severity === "alta" ? "warn" : "neutral"}>{d.severity}</Badge>
                   </td>
                   <td className="py-2 text-right font-medium">{d.n}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </Card>
+      <Card>
+        <CardTitle hint="diagnósticos bank_rejected · la razón llega al expirar la sesión">Rechazos del banco</CardTitle>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <p className="text-xs text-muted">Con razón conocida</p>
+            <p className="mt-1 text-2xl font-semibold tracking-tight">{m.bankRejections.withReason}</p>
+          </div>
+          <div>
+            <p className="text-xs text-muted">Sin razón todavía</p>
+            <p className="mt-1 text-2xl font-semibold tracking-tight">{m.bankRejections.withoutReason}</p>
+          </div>
+        </div>
+        {m.bankRejections.byReason.length > 0 && (
+          <table className="mt-3 w-full text-sm">
+            <tbody>
+              {m.bankRejections.byReason.map((r) => (
+                <tr key={r.reason} className="border-t border-line">
+                  <td className="py-2 pr-3 font-mono text-xs">{r.reason}</td>
+                  <td className="py-2 text-right font-medium">{r.n}</td>
                 </tr>
               ))}
             </tbody>

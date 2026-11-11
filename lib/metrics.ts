@@ -8,6 +8,7 @@ import { db, type Channel } from "./db";
 export const FUNNEL_STEPS = [
   "session_created",
   "widget_opened",
+  "reached_bank",
   "authorization_completed",
   "webhook_verified",
   "payment_confirmed",
@@ -23,6 +24,8 @@ export interface Metrics {
   funnel: FunnelRow[];
   timing: { median_s: number | null; p90_s: number | null; paid: number };
   diagnostics: { rule_id: string; severity: string; n: number }[];
+  /** Rechazos del banco (DECISIONS.md, 2026-11-11): diagnósticos `bank_rejected`. */
+  bankRejections: { withReason: number; withoutReason: number; byReason: { reason: string; n: number }[] };
   orphanWebhooks: number;
   expiredWithoutWidget: number;
   sessions: number;
@@ -49,7 +52,18 @@ export async function getMetrics(): Promise<Metrics> {
         ${owner}
       group by s.channel, f.step
       union all
-      -- "autorización" = el cliente llegó al banco: onSuccess del widget (solo
+      -- "llegó al banco" = el widget emitió payment_in_progress; se suma a quien
+      -- autorizó o tuvo webhook (sesiones anteriores a registrar eventos del widget)
+      select s.channel, 'reached_bank', count(distinct f.session_id)::int
+      from funnel_events f join sessions s on s.id = f.session_id
+      where (
+          (f.step = 'widget_event' and f.metadata->>'type' = 'payment_in_progress')
+          or f.step = 'authorization_completed'
+          or (f.step = 'webhook_verified' and f.metadata->>'event_type' not like '%.expired')
+        ) ${owner}
+      group by s.channel
+      union all
+      -- "autorización" = el cliente autorizó en el banco: onSuccess del widget (solo
       -- dispara en éxito) o un webhook con resultado de pago (éxito, pendiente o falla)
       select s.channel, 'authorization_completed', count(distinct f.session_id)::int
       from funnel_events f join sessions s on s.id = f.session_id
@@ -95,6 +109,23 @@ export async function getMetrics(): Promise<Metrics> {
     group by d.rule_id, d.severity order by n desc
   `;
 
+  const rejectionRows = await sql<{ reason: string | null; n: number }[]>`
+    select r.metadata->>'error_reason' as reason, count(*)::int as n
+    from diagnostics d
+    left join lateral (
+      select f.metadata from funnel_events f
+      where f.session_id = d.session_id and f.step = 'payment_rejected_in_bank'
+      order by f.occurred_at desc limit 1
+    ) r on true
+    where d.rule_id = 'bank_rejected'
+    group by 1 order by n desc
+  `;
+  const bankRejections = {
+    withReason: rejectionRows.filter((r) => r.reason).reduce((a, r) => a + r.n, 0),
+    withoutReason: rejectionRows.filter((r) => !r.reason).reduce((a, r) => a + r.n, 0),
+    byReason: rejectionRows.filter((r): r is { reason: string; n: number } => Boolean(r.reason)),
+  };
+
   const [{ n: orphanWebhooks }] = await sql<{ n: number }[]>`
     select count(*)::int as n from payment_events
     where session_id is null and signature_valid = true
@@ -112,6 +143,7 @@ export async function getMetrics(): Promise<Metrics> {
     funnel,
     timing,
     diagnostics,
+    bankRejections,
     orphanWebhooks,
     expiredWithoutWidget,
     sessions: total.session_created,
